@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Звуковые эффекты Mozzi</title>
+<style>
+:root{
+  --bg:#f6f4ef; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#d9d5cc;
+  --accent:#e0562b; --accent2:#2a7de1; --ok:#0a7d5a; --code:#f1eee7; --scope:#101418; --trace:#ffb020;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#141416; --card:#1e1e22; --ink:#ececf0; --muted:#9a9aa3; --line:#34343a; --code:#26262b; }
+}
+:root[data-theme="dark"]{ --bg:#141416; --card:#1e1e22; --ink:#ececf0; --muted:#9a9aa3; --line:#34343a; --code:#26262b; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:30px;margin:8px 0 4px}
+h2{font-size:21px;margin:0 0 4px}
+h3{font-size:15px;margin:14px 0 6px;color:var(--muted);font-weight:600}
+.lead{color:var(--muted);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:0 0 18px}
+.muted{color:var(--muted)}
+button{font:inherit;padding:8px 16px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--ink)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.sticky{padding:10px 0 4px}
+@media (min-width:1000px) and (min-height:800px){.sticky{position:sticky;top:0;z-index:5;background:var(--bg)}}
+.scopes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+canvas{width:100%;height:150px;background:var(--scope);border-radius:10px;display:block}
+.chain{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin:10px 0 18px}
+.blk{flex:1;min-width:120px;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--card);font-size:13px;transition:background .2s}
+.blk b{display:block;font-size:14px}
+.blk.on{background:color-mix(in srgb,var(--accent) 16%,var(--card));border-color:var(--accent)}
+.arrow{align-self:center;color:var(--muted)}
+.pot{display:grid;grid-template-columns:120px 1fr 70px;gap:10px;align-items:center;margin:6px 0}
+.pot .pin{font-weight:700}
+.pot output{font:600 15px ui-monospace,Menlo,monospace;text-align:right}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.live{font:14px ui-monospace,Menlo,monospace;background:var(--code);border-radius:8px;padding:8px 10px;margin:8px 0}
+pre{font:13px/1.45 ui-monospace,Menlo,monospace;background:var(--code);border-radius:8px;padding:10px 12px;overflow-x:auto;margin:6px 0}
+code{font:13px ui-monospace,Menlo,monospace;background:var(--code);padding:1px 5px;border-radius:4px}
+.params{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 14px}
+.param{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:14px}
+.param span{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.param input{width:96px}.param select{width:170px}.param input,.param select{font:inherit;font-size:14px;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.param.changed span{color:var(--accent);font-weight:700}
+.hint{font-size:13px;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600}
+.tag{font-size:11px;padding:1px 6px;border-radius:5px;background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok);font-weight:700;white-space:nowrap}
+label.chk{display:flex;gap:8px;align-items:center;font-weight:700;cursor:pointer}
+@media (max-width:720px){.scopes,.two{grid-template-columns:1fr}.pot{grid-template-columns:90px 1fr 56px}canvas{height:120px}}
+</style>
+</head>
+<body>
+<main>
+<h1>Звуковые эффекты</h1>
+<p class="lead">Разбор скетча <code>sine_pm_am_crush_lfo2.ino</code>: какие эффекты в нём есть, какой строчкой каждый сделан и что можно настроить. Страница пересчитывает звук по тем же формулам, что Arduino Nano (Mozzi, 16384 Гц, 8 бит), — включите звук и крутите ручки.</p>
+
+<div class="sticky">
+  <div class="row">
+    <button class="primary" id="play">▶ Включить звук</button>
+    <label class="row" style="gap:6px">громкость <input id="vol" type="range" min="0" max="1" step="0.01" value="0.4" style="width:140px"></label>
+    <button id="reset">сбросить всё</button>
+    <span class="hint" id="srInfo"></span>
+  </div>
+  <div class="scopes">
+    <canvas id="scope" width="900" height="300" aria-label="Осциллограмма"></canvas>
+    <canvas id="spec" width="900" height="300" aria-label="Спектр"></canvas>
+  </div>
+</div>
+
+<h3>Путь сигнала (подсвечено то, что сейчас работает)</h3>
+<div class="chain" id="chain"></div>
+
+<section class="card" data-card="carrier">
+  <h2>1. Генератор — несущая частота</h2>
+  <p>Синус — основа звука. Ручка задаёт высоту тона, шкала логарифмическая: каждая ⅕ поворота — октава.</p>
+</section>
+
+<section class="card" data-card="pm">
+  <h2>2. Фазовая модуляция (PM) — тембр</h2>
+  <p>Второй синус (модулятор) раскачивает фазу основного. Появляются обертоны, звук из «чистого» становится звонким и металлическим — так звучат FM-синтезаторы вроде Yamaha DX7. При <code>MOD_RATIO</code> 1, 2, 3 звук музыкальный, при дробном (1.41, 3.5) — колокольный.</p>
+</section>
+
+<section class="card" data-card="lfo">
+  <h2>3. LFO — тембр «плавает»</h2>
+  <p>LFO — медленный генератор (0.1–10 Гц). Его самого не слышно, он двигает другой параметр — здесь частоту модулятора. Слышно только при ненулевой глубине PM (ручка A2).</p>
+</section>
+
+<section class="card" data-card="am">
+  <h2>4. Тремоло (AM) — громкость качается</h2>
+  <p>Громкость умножается на медленный синус. Фоторезистор задаёт глубину (или скорость, если <code>AM_MODE 1</code>).</p>
+</section>
+
+<section class="card" data-card="crush">
+  <h2>5. Биткраш — «8-битный» хрип</h2>
+  <p>Две грубости сразу: меньше бит (ступеньки по громкости) и реже отсчёты (ступеньки по времени). На осциллограмме синус превращается в лесенку.</p>
+</section>
+
+<section class="card">
+  <h2>Ваши настройки для скетча</h2>
+  <p class="hint">Изменённые значения отмечены. Скопируйте и замените ими соответствующие строки в начале скетча.</p>
+  <pre id="defs"></pre>
+  <button id="copy">Скопировать</button>
+</section>
+
+<h1 style="font-size:24px;margin-top:34px">Какие эффекты бывают ещё</h1>
+<p class="lead">Их нет в скетче, но в Mozzi они делаются в несколько строк. Первые четыре можно включить здесь — они встают в цепочку после биткраша.</p>
+
+<div class="two">
+  <section class="card" data-extra="drive">
+    <label class="chk"><input type="checkbox" id="xDrive"> Перегруз (дисторшн)</label>
+    <p class="hint">Сигнал усиливается и срезается сверху — синус становится почти прямоугольником.</p>
+    <div class="pot"><span>усиление</span><input id="drive" type="range" min="1" max="20" step="0.1" value="4"><output id="driveO"></output></div>
+    <pre>sample = constrain(sample * DRIVE, -128, 127);</pre>
+  </section>
+
+  <section class="card" data-extra="filter">
+    <label class="chk"><input type="checkbox" id="xFilter"> Фильтр НЧ с резонансом</label>
+    <p class="hint">Срезает высокие частоты: звук темнеет. Резонанс добавляет «вау» на частоте среза. Хорошо слышно с PM и биткрашем.</p>
+    <div class="pot"><span>срез, Гц</span><input id="cut" type="range" min="0" max="1" step="0.001" value="0.55"><output id="cutO"></output></div>
+    <div class="pot"><span>резонанс</span><input id="res" type="range" min="0" max="255" step="1" value="180"><output id="resO"></output></div>
+    <pre id="filterCode"></pre>
+  </section>
+
+  <section class="card" data-extra="echo">
+    <label class="chk"><input type="checkbox" id="xEcho"> Эхо (задержка с обратной связью)</label>
+    <p class="hint">Звук повторяется с задержкой и затухает. На Nano памяти хватит лишь на ~30–60 мс (на ESP32 — секунды): получится не эхо, а «гулкий» металлический призвук.</p>
+    <div class="pot"><span>задержка, мс</span><input id="dly" type="range" min="1" max="600" step="1" value="250"><output id="dlyO"></output></div>
+    <div class="pot"><span>повторы</span><input id="fb" type="range" min="0" max="0.9" step="0.01" value="0.5"><output id="fbO"></output></div>
+    <pre id="echoCode"></pre>
+  </section>
+
+  <section class="card" data-extra="env">
+    <label class="chk"><input type="checkbox" id="xEnv"> Огибающая ADSR</label>
+    <p class="hint">Звук звучит не постоянно, а как нота: атака, спад, удержание, затухание. Включите и нажимайте кнопку (или клавишу N).</p>
+    <div class="pot"><span>атака, мс</span><input id="eA" type="range" min="1" max="2000" value="30"><output id="eAO"></output></div>
+    <div class="pot"><span>спад, мс</span><input id="eD" type="range" min="1" max="2000" value="300"><output id="eDO"></output></div>
+    <div class="pot"><span>удержание</span><input id="eS" type="range" min="0" max="255" value="120"><output id="eSO"></output></div>
+    <div class="pot"><span>затухание, мс</span><input id="eR" type="range" min="1" max="3000" value="600"><output id="eRO"></output></div>
+    <button id="note">● нота (держать)</button>
+    <pre id="envCode"></pre>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Справочник</h2>
+  <table>
+    <thead><tr><th>Эффект</th><th>Что слышно</th><th>Чем в Mozzi</th><th>Параметры</th></tr></thead>
+    <tbody>
+      <tr><td>Тремоло (AM) <span class="tag">в скетче</span></td><td>громкость качается</td><td><code>Oscil</code> как LFO, умножение</td><td>скорость, глубина</td></tr>
+      <tr><td>Фазовая / частотная модуляция <span class="tag">в скетче</span></td><td>металлический, колокольный тембр</td><td><code>Oscil::phMod()</code></td><td>соотношение частот, глубина</td></tr>
+      <tr><td>LFO на параметр <span class="tag">в скетче</span></td><td>тембр или высота «плавают»</td><td><code>Oscil</code> на control-rate</td><td>скорость, глубина, куда подключён</td></tr>
+      <tr><td>Биткраш <span class="tag">в скетче</span></td><td>хрип, «8-бит»</td><td>маска бит + повтор отсчётов</td><td>бит, во сколько раз реже</td></tr>
+      <tr><td>Вибрато</td><td>высота дрожит</td><td>LFO на <code>setFreq()</code></td><td>скорость, глубина</td></tr>
+      <tr><td>Перегруз</td><td>грязный, жёсткий</td><td><code>constrain()</code>, <code>WaveShaper</code></td><td>усиление</td></tr>
+      <tr><td>Wavefolder</td><td>яркий, «пищащий» перегруз</td><td><code>WaveFolder</code></td><td>уровень, пороги</td></tr>
+      <tr><td>Фильтр НЧ/ВЧ</td><td>темнее/тоньше, «вау»</td><td><code>ResonantFilter</code>, <code>StateVariable</code></td><td>частота среза, резонанс</td></tr>
+      <tr><td>Кольцевая модуляция</td><td>робот, колокол</td><td>произведение двух <code>Oscil</code></td><td>частота второго генератора</td></tr>
+      <tr><td>Эхо</td><td>повторы</td><td><code>AudioDelayFeedback</code></td><td>время, обратная связь</td></tr>
+      <tr><td>Хорус / флэнжер</td><td>«водяной», объёмный звук</td><td><code>AudioDelay</code> + LFO на время</td><td>время, скорость, глубина</td></tr>
+      <tr><td>Реверберация</td><td>звук в зале</td><td><code>ReverbTank</code></td><td>длительность хвоста</td></tr>
+      <tr><td>Огибающая ADSR</td><td>звук как нота</td><td><code>ADSR</code>, <code>Ead</code></td><td>атака, спад, удержание, затухание</td></tr>
+      <tr><td>Портаменто</td><td>высота плавно скользит</td><td><code>Portamento</code>, <code>Smooth</code></td><td>время скольжения</td></tr>
+      <tr><td>Шум</td><td>шипение, ветер, ударные</td><td><code>rand()</code>, таблица <code>whitenoise</code></td><td>громкость, фильтр</td></tr>
+    </tbody>
+  </table>
+  <p class="hint">Правило Mozzi: медленное (чтение ручек, LFO, огибающие) — в <code>updateControl()</code>, 256 раз в секунду; то, что считается для каждого отсчёта звука, — в <code>updateAudio()</code>, 16384 раза в секунду.</p>
+</section>
+
+<p class="hint">Как сделана страница: генераторы, сглаживание ручек и целочисленная арифметика повторяют скетч и Mozzi (таблица синуса 2048 точек, фаза 16.16). Звук считается на 16384 Гц и 8 бит, как на Nano. Перегруз, фильтр, эхо и ADSR — встроенные узлы Web Audio, звучат похоже, но не бит в бит.</p>
+</main>
+
+<script>
+/* ================= Параметры скетча (#define) ================= */
+const PARAMS = [
+  { card: 'carrier', k: 'MIN_FREQ', v: 55, min: 20, max: 1000, step: 1, f: 1, d: 'частота при ручке в нуле, Гц' },
+  { card: 'carrier', k: 'FREQ_OCTAVES', v: 5, min: 1, max: 8, step: 0.5, f: 1, d: 'диапазон ручки в октавах' },
+  { card: 'pm', k: 'MOD_RATIO', v: 1, min: 0.1, max: 8, step: 0.01, f: 1, d: 'модулятор = несущая × это' },
+  { card: 'pm', k: 'PM_MAX_CYCLES', v: 1.5, min: 0, max: 5, step: 0.1, f: 1, d: 'максимальная глубина PM' },
+  { card: 'lfo', k: 'PMLFO_MODE', v: 0, opts: [[0, '0: ручка = скорость'], [1, '1: ручка = глубина']], d: 'что делает ручка A4' },
+  { card: 'lfo', k: 'LFO_DEPTH', v: 0.5, min: 0, max: 0.9, step: 0.05, f: 1, d: 'размах ±, доля частоты' },
+  { card: 'lfo', k: 'LFO_RATE_MIN', v: 0.1, min: 0.01, max: 5, step: 0.01, f: 1, d: 'режим 0: мин. скорость, Гц' },
+  { card: 'lfo', k: 'LFO_RATE_MAX', v: 10, min: 0.5, max: 50, step: 0.5, f: 1, d: 'режим 0: макс. скорость, Гц' },
+  { card: 'lfo', k: 'LFO_RATE_HZ', v: 2, min: 0.05, max: 20, step: 0.05, f: 1, d: 'режим 1: скорость, Гц' },
+  { card: 'am', k: 'LIGHT_MIN', v: 147, min: 0, max: 1000, step: 1, d: 'показание без эффекта' },
+  { card: 'am', k: 'LIGHT_MAX', v: 1023, min: 10, max: 1023, step: 1, d: 'показание с полным эффектом' },
+  { card: 'am', k: 'AM_INVERT', v: 0, opts: [[0, '0: нет'], [1, '1: да']], d: 'больше света = меньше эффекта' },
+  { card: 'am', k: 'AM_MODE', v: 0, opts: [[0, '0: свет = глубина'], [1, '1: свет = скорость']], d: 'что делает фоторезистор' },
+  { card: 'am', k: 'AM_RATE_HZ', v: 5, min: 0.1, max: 40, step: 0.1, f: 1, d: 'режим 0: скорость, Гц' },
+  { card: 'am', k: 'AM_RATE_MIN', v: 0.5, min: 0.1, max: 20, step: 0.1, f: 1, d: 'режим 1: мин. скорость, Гц' },
+  { card: 'am', k: 'AM_RATE_MAX', v: 60, min: 1, max: 200, step: 1, f: 1, d: 'режим 1: макс. скорость, Гц' },
+  { card: 'crush', k: 'SENSOR_MIN', v: 300, min: 0, max: 1000, step: 1, d: 'показание, где эффект начинается' },
+  { card: 'crush', k: 'SENSOR_MAX', v: 500, min: 1, max: 1023, step: 1, d: 'показание максимального эффекта' },
+  { card: 'crush', k: 'CRUSH_MAX_SHIFT', v: 6, min: 0, max: 7, step: 1, d: 'сколько бит выкинуть (из 8)' },
+  { card: 'crush', k: 'CRUSH_MAX_HOLD', v: 4, min: 1, max: 16, step: 1, d: 'во сколько раз реже отсчёты' },
+];
+const P = {}; PARAMS.forEach(p => P[p.k] = p.v);
+
+/* ================= Ручки (пины) ================= */
+const POTS = [
+  { card: 'carrier', pin: 'A3', k: 'freq', v: 300, what: 'потенциометр' },
+  { card: 'pm', pin: 'A2', k: 'pm', v: 250, what: 'потенциометр' },
+  { card: 'lfo', pin: 'A4', k: 'lfo', v: 0, what: 'потенциометр' },
+  { card: 'am', pin: 'A1', k: 'light', v: 147, what: 'фоторезистор' },
+  { card: 'crush', pin: 'A0', k: 'sensor', v: 0, what: 'сенсор касания' },
+];
+const RAW = {}; POTS.forEach(p => RAW[p.k] = p.v);
+
+const CODE = {
+  carrier: `float f = MIN_FREQ * pow(2.0f, (freqSm >> 4) / 1023.0f * FREQ_OCTAVES);
+carrier.setFreq(f);                  // в updateControl()
+...
+int8_t c = carrier.phMod(...);       // в updateAudio(): следующий отсчёт синуса`,
+  pm: `modulator.setFreq(f * MOD_RATIO * (1.0f + lfoDepth * lfoVal));
+pmDepth = (pmSm >> 4) / 1023.0f * PM_MAX_CYCLES * 65536.0f;
+...
+int8_t m = modulator.next();                   // -128..127
+int8_t c = carrier.phMod((pmDepth * m) >> 7);  // сдвиг фазы несущей`,
+  lfo: `#if PMLFO_MODE == 0
+  float lfoRate = LFO_RATE_MIN * pow(LFO_RATE_MAX / LFO_RATE_MIN, lv / 1023.0f);
+  pmLfo.setFreq(lfoRate);
+  lfoDepth = LFO_DEPTH * constrain(lv / 40.0f, 0.0f, 1.0f);
+#else
+  pmLfo.setFreq(LFO_RATE_HZ);
+  lfoDepth = LFO_DEPTH * (lv / 1023.0f);
+#endif
+float lfoVal = pmLfo.next() / 128.0f;          // -1..+1`,
+  am: `amDepth = map(light, LIGHT_MIN, LIGHT_MAX, 0, 255);   // AM_MODE 0
+...
+uint8_t l = (uint8_t)(lfo.next() + 128);                // 0..255
+uint8_t gainAM = 255 - ((amDepth * (255 - l)) >> 8);
+int16_t s = (c * gainAM) >> 8;`,
+  crush: `uint8_t shift = (amount * CRUSH_MAX_SHIFT) / range;
+crushMask  = ~((1 << shift) - 1);                      // обнулить младшие биты
+crushHold  = 1 + (amount * (CRUSH_MAX_HOLD - 1)) / range;
+...
+if (++holdCnt >= crushHold) {                          // новый отсчёт раз в crushHold
+  holdCnt = 0;
+  heldSample = constrain((s + crushRound) & crushMask, -128, 127);
+}`,
+};
+
+/* ================= Построение карточек ================= */
+for (const card of document.querySelectorAll('[data-card]')) {
+  const id = card.dataset.card;
+  const pot = POTS.find(p => p.card === id);
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <h3>Ручка на макетке</h3>
+    <div class="pot"><span class="pin">${pot.pin} <span class="hint">${pot.what}</span></span>
+      <input type="range" min="0" max="1023" value="${pot.v}" data-pot="${pot.k}" aria-label="${pot.pin}">
+      <output id="o_${pot.k}"></output></div>
+    <div class="live" id="live_${id}"></div>
+    <h3>В коде</h3><pre>${CODE[id].replace(/</g, '&lt;')}</pre>
+    <h3>Параметры в начале скетча</h3><div class="params"></div>`;
+  card.appendChild(wrap);
+  const box = wrap.querySelector('.params');
+  for (const p of PARAMS.filter(p => p.card === id)) {
+    const d = document.createElement('label');
+    d.className = 'param'; d.title = p.d; d.dataset.k = p.k;
+    const ctl = p.opts
+      ? `<select data-k="${p.k}">${p.opts.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select>`
+      : `<input type="number" data-k="${p.k}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.v}">`;
+    d.innerHTML = `<div><span>${p.k}</span><div class="hint">${p.d}</div></div>${ctl}`;
+    box.appendChild(d);
+  }
+}
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.pot) RAW[t.dataset.pot] = +t.value;
+  if (t.dataset.k) {
+    const p = PARAMS.find(p => p.k === t.dataset.k);
+    let v = +t.value;
+    if (!Number.isFinite(v)) return;
+    if (!p.opts) v = Math.min(p.max, Math.max(p.min, v));
+    P[p.k] = v;
+    t.closest('.param').classList.toggle('changed', v !== p.v);
+    renderDefs();
+  }
+});
+document.addEventListener('change', e => { if (e.target.dataset.k) e.target.dispatchEvent(new Event('input', { bubbles: true })); });
+
+function renderDefs() {
+  const w = Math.max(...PARAMS.map(p => p.k.length)) + 1;
+  document.getElementById('defs').textContent = PARAMS.map(p => {
+    const v = P[p.k];
+    const s = p.f ? (Number.isInteger(v) ? v.toFixed(1) : String(+v.toFixed(3))) + 'f' : String(v);
+    return `#define ${p.k.padEnd(w)} ${s.padEnd(8)}${v !== p.v ? '  // было ' + p.v : ''}`;
+  }).join('\n');
+}
+document.getElementById('copy').onclick = async e => {
+  try { await navigator.clipboard.writeText(document.getElementById('defs').textContent); e.target.textContent = 'Скопировано'; }
+  catch { e.target.textContent = 'Выделите текст вручную'; }
+  setTimeout(() => e.target.textContent = 'Скопировать', 1500);
+};
+document.getElementById('reset').onclick = () => {
+  PARAMS.forEach(p => { P[p.k] = p.v; const c = document.querySelector(`[data-k="${p.k}"]:not(label)`); c.value = p.v; c.closest('.param').classList.remove('changed'); });
+  POTS.forEach(p => { RAW[p.k] = p.v; document.querySelector(`[data-pot="${p.k}"]`).value = p.v; });
+  ['xDrive', 'xFilter', 'xEcho', 'xEnv'].forEach(id => document.getElementById(id).checked = false);
+  rewire(); renderDefs();
+};
+
+/* ================= Эмуляция скетча (как на Nano) ================= */
+const AUDIO_RATE = 16384, CONTROL_RATE = 256, STEPS_PER_CONTROL = AUDIO_RATE / CONTROL_RATE;
+const SIN = new Int8Array(2048);
+for (let i = 0; i < 2048; i++) SIN[i] = Math.max(-128, Math.min(127, Math.round(127 * Math.sin(2 * Math.PI * i / 2048))));
+
+class Oscil {                                 // Mozzi Oscil: фаза 16.16, таблица 2048
+  constructor(rate) { this.rate = rate; this.ph = 0; this.inc = 0; }
+  setFreq(f) { this.inc = Math.trunc(2048 * f / this.rate * 65536) >>> 0; }
+  next() { this.ph = (this.ph + this.inc) >>> 0; return SIN[(this.ph >>> 16) & 2047]; }
+  phMod(p) { this.ph = (this.ph + this.inc) >>> 0; return SIN[(((this.ph + p * 2048) >>> 0) >>> 16) & 2047]; }
+}
+const constrain = (x, a, b) => x < a ? a : x > b ? b : x;
+const amap = (x, a, b, c, d) => Math.trunc((x - a) * (d - c) / (b - a)) + c;   // Arduino map()
+
+const S = {
+  carrier: new Oscil(AUDIO_RATE), modulator: new Oscil(AUDIO_RATE), lfo: new Oscil(AUDIO_RATE), pmLfo: new Oscil(CONTROL_RATE),
+  freqSm: RAW.freq << 4, pmSm: RAW.pm << 4, lightSm: RAW.light << 4, sensorSm: RAW.sensor << 4, lfoSm: RAW.lfo << 4,
+  pmDepth: 0, amDepth: 0, crushMask: -1, crushRound: 0, crushHold: 1, holdCnt: 0, held: 0, ctl: 0,
+  view: {},
+};
+S.pmLfo.setFreq(1);
+const smooth = (s, v) => s + (((v << 4) - s) >> 3);
+
+function updateControl() {
+  S.freqSm = smooth(S.freqSm, RAW.freq); S.pmSm = smooth(S.pmSm, RAW.pm);
+  S.lightSm = smooth(S.lightSm, RAW.light); S.sensorSm = smooth(S.sensorSm, RAW.sensor); S.lfoSm = smooth(S.lfoSm, RAW.lfo);
+
+  const lv = S.lfoSm >> 4;
+  let lfoDepth, lfoRate;
+  if (P.PMLFO_MODE == 0) {
+    lfoRate = P.LFO_RATE_MIN * Math.pow(P.LFO_RATE_MAX / P.LFO_RATE_MIN, lv / 1023);
+    lfoDepth = P.LFO_DEPTH * constrain(lv / 40, 0, 1);
+  } else {
+    lfoRate = P.LFO_RATE_HZ;
+    lfoDepth = P.LFO_DEPTH * (lv / 1023);
+  }
+  S.pmLfo.setFreq(lfoRate);
+  const lfoVal = S.pmLfo.next() / 128;
+
+  const f = P.MIN_FREQ * Math.pow(2, (S.freqSm >> 4) / 1023 * P.FREQ_OCTAVES);
+  const fm = f * P.MOD_RATIO * (1 + lfoDepth * lfoVal);
+  S.carrier.setFreq(f); S.modulator.setFreq(fm);
+  S.pmDepth = Math.trunc((S.pmSm >> 4) / 1023 * P.PM_MAX_CYCLES * 65536);
+
+  let light = constrain(S.lightSm >> 4, P.LIGHT_MIN, P.LIGHT_MAX);
+  if (P.AM_INVERT == 1) light = P.LIGHT_MIN + P.LIGHT_MAX - light;
+  let amRate;
+  if (P.AM_MODE == 0) {
+    S.amDepth = P.LIGHT_MAX > P.LIGHT_MIN ? constrain(amap(light, P.LIGHT_MIN, P.LIGHT_MAX, 0, 255), 0, 255) : 0;
+    amRate = P.AM_RATE_HZ;
+  } else {
+    S.amDepth = 255;
+    const t = (light - P.LIGHT_MIN) / Math.max(1, P.LIGHT_MAX - P.LIGHT_MIN);
+    amRate = P.AM_RATE_MIN * Math.pow(P.AM_RATE_MAX / P.AM_RATE_MIN, t);
+  }
+  S.lfo.setFreq(amRate);
+
+  const range = Math.max(1, P.SENSOR_MAX - P.SENSOR_MIN);
+  const amount = constrain((S.sensorSm >> 4) - P.SENSOR_MIN, 0, range);
+  const shift = Math.trunc(amount * P.CRUSH_MAX_SHIFT / range);
+  S.crushMask = ~((1 << shift) - 1);
+  S.crushRound = shift ? (1 << (shift - 1)) : 0;
+  S.crushHold = 1 + Math.trunc(amount * (P.CRUSH_MAX_HOLD - 1) / range);
+
+  Object.assign(S.view, { f, fm, lfoRate, lfoDepth, lv, light, amRate, shift, amount, range });
+}
+
+function updateAudio() {
+  const m = S.modulator.next();
+  const c = S.carrier.phMod((S.pmDepth * m) >> 7);
+  const l = (S.lfo.next() + 128) & 255;
+  const gainAM = 255 - ((S.amDepth * (255 - l)) >> 8);
+  const s = (c * gainAM) >> 8;
+  if (++S.holdCnt >= S.crushHold) {
+    S.holdCnt = 0;
+    S.held = constrain((s + S.crushRound) & S.crushMask, -128, 127);
+  }
+  return S.held;
+}
+function step() {                    // один отсчёт Mozzi, с вызовом updateControl() каждые 64
+  if (S.ctl-- <= 0) { S.ctl = STEPS_PER_CONTROL - 1; updateControl(); }
+  return updateAudio();
+}
+
+/* ================= Web Audio ================= */
+let ctx, proc, analyser, master, shaper, filter, dIn, dOut, dly, fbG, env, noteDown = false;
+let acc = 0, last = 0;
+
+function initAudio() {
+  try { ctx = new AudioContext({ sampleRate: AUDIO_RATE }); } catch { ctx = new AudioContext(); }
+  const ratio = AUDIO_RATE / ctx.sampleRate;
+  document.getElementById('srInfo').textContent = ctx.sampleRate === AUDIO_RATE
+    ? 'звук считается на 16384 Гц, как на Nano' : `браузер дал ${ctx.sampleRate} Гц, отсчёты Nano 16384 Гц повторяются`;
+  proc = ctx.createScriptProcessor(1024, 1, 1);
+  proc.onaudioprocess = e => {
+    const out = e.outputBuffer.getChannelData(0);
+    for (let i = 0; i < out.length; i++) {
+      acc += ratio;
+      while (acc >= 1) { acc -= 1; last = step(); }
+      out[i] = last / 128;
+    }
+  };
+  shaper = ctx.createWaveShaper();
+  filter = ctx.createBiquadFilter(); filter.type = 'lowpass';
+  dIn = ctx.createGain(); dOut = ctx.createGain(); dly = ctx.createDelay(1); fbG = ctx.createGain();
+  dIn.connect(dOut); dIn.connect(dly); dly.connect(fbG); fbG.connect(dly); dly.connect(dOut);
+  env = ctx.createGain(); env.gain.value = 0;
+  analyser = ctx.createAnalyser(); analyser.fftSize = 4096; analyser.smoothingTimeConstant = 0.6;
+  analyser.minDecibels = -100; analyser.maxDecibels = -10;
+  master = ctx.createGain();
+  analyser.connect(master); master.connect(ctx.destination);
+  rewire(); applyExtras();
+}
+
+function rewire() {
+  if (!ctx) return;
+  for (const n of [proc, shaper, filter, dOut, env]) n.disconnect();
+  const chain = [proc];
+  if (xDrive.checked) chain.push(shaper);
+  if (xFilter.checked) chain.push(filter);
+  if (xEcho.checked) chain.push({ in: dIn, out: dOut });
+  if (xEnv.checked) chain.push(env);
+  chain.push(analyser);
+  for (let i = 0; i < chain.length - 1; i++) (chain[i].out || chain[i]).connect(chain[i + 1].in || chain[i + 1]);
+}
+
+const $ = id => document.getElementById(id);
+const xDrive = $('xDrive'), xFilter = $('xFilter'), xEcho = $('xEcho'), xEnv = $('xEnv');
+for (const x of [xDrive, xFilter, xEcho, xEnv]) x.addEventListener('change', () => { rewire(); applyExtras(); });
+
+const cutHz = () => 40 * Math.pow(8000 / 40, +$('cut').value);
+function applyExtras() {
+  const drive = +$('drive').value;
+  $('driveO').textContent = '×' + drive.toFixed(1);
+  const hz = cutHz(), res = +$('res').value;
+  $('cutO').textContent = Math.round(hz);
+  $('resO').textContent = res;
+  $('filterCode').textContent =
+`ResonantFilter<LOWPASS> lpf;                       // глобально
+lpf.setCutoffFreqAndResonance(${Math.min(255, Math.round(hz / 8191 * 255))}, ${res});  // 0..255 = 0..8191 Гц
+sample = lpf.next(sample);                         // в updateAudio()`;
+  const ms = +$('dly').value, fb = +$('fb').value;
+  $('dlyO').textContent = ms; $('fbO').textContent = Math.round(fb * 100) + '%';
+  const cells = Math.round(ms * AUDIO_RATE / 1000);
+  $('echoCode').textContent =
+`AudioDelayFeedback<${Math.pow(2, Math.ceil(Math.log2(cells + 1)))}> echo;   // буфер в отсчётах${cells > 1000 ? ' — на Nano столько памяти нет!' : ''}
+echo.setFeedbackLevel(${Math.round(fb * 127)});                  // -128..127
+sample = echo.next(sample, ${cells});              // ${ms} мс`;
+  const A = +$('eA').value, D = +$('eD').value, Sl = +$('eS').value, R = +$('eR').value;
+  $('eAO').textContent = A; $('eDO').textContent = D; $('eSO').textContent = Sl; $('eRO').textContent = R;
+  $('envCode').textContent =
+`ADSR<MOZZI_CONTROL_RATE, MOZZI_AUDIO_RATE> env;
+env.setADLevels(255, ${Sl});
+env.setTimes(${A}, ${D}, 60000, ${R});    // мс
+env.noteOn();  /  env.noteOff();          // кнопка
+env.update();                             // в updateControl()
+sample = (sample * env.next()) >> 8;      // в updateAudio()`;
+  if (!ctx) return;
+  const n = 1024, curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) curve[i] = constrain((i / (n - 1) * 2 - 1) * drive, -1, 1);
+  shaper.curve = curve;
+  filter.frequency.value = Math.min(hz, ctx.sampleRate / 2 - 10);
+  filter.Q.value = 0.7 + res / 255 * 18;
+  dly.delayTime.value = ms / 1000; fbG.gain.value = fb;
+}
+for (const id of ['drive', 'cut', 'res', 'dly', 'fb', 'eA', 'eD', 'eS', 'eR']) $(id).addEventListener('input', applyExtras);
+
+function noteOn() {
+  if (!ctx || noteDown) return; noteDown = true;
+  const g = env.gain, t = ctx.currentTime;
+  g.cancelScheduledValues(t); g.setValueAtTime(g.value, t);
+  g.linearRampToValueAtTime(1, t + $('eA').value / 1000);
+  g.linearRampToValueAtTime($('eS').value / 255, t + (+$('eA').value + +$('eD').value) / 1000);
+  $('note').textContent = '● звучит…';
+}
+function noteOff() {
+  if (!ctx || !noteDown) return; noteDown = false;
+  const g = env.gain, t = ctx.currentTime;
+  g.cancelScheduledValues(t); g.setValueAtTime(g.value, t);
+  g.linearRampToValueAtTime(0, t + $('eR').value / 1000);
+  $('note').textContent = '● нота (держать)';
+}
+$('note').addEventListener('pointerdown', noteOn);
+$('note').addEventListener('pointerup', noteOff);
+$('note').addEventListener('pointerleave', noteOff);
+addEventListener('keydown', e => { if (e.code === 'KeyN' && !e.repeat && !/INPUT|SELECT/.test(e.target.tagName)) noteOn(); });
+addEventListener('keyup', e => { if (e.code === 'KeyN') noteOff(); });
+
+$('vol').addEventListener('input', () => master && (master.gain.value = +$('vol').value));
+$('play').onclick = async () => {
+  if (!ctx) initAudio();
+  if (ctx.state === 'running') { await ctx.suspend(); $('play').textContent = '▶ Включить звук'; }
+  else { await ctx.resume(); $('play').textContent = '■ Выключить'; }
+  master.gain.value = +$('vol').value;
+};
+
+/* ================= Подписи и графики ================= */
+const NOTES = ['до', 'до♯', 'ре', 'ре♯', 'ми', 'фа', 'фа♯', 'соль', 'соль♯', 'ля', 'ля♯', 'си'];
+const noteName = f => { const n = Math.round(12 * Math.log2(f / 440) + 69); return NOTES[(n % 12 + 12) % 12] + (Math.floor(n / 12) - 1); };
+const fx = (v, d = 1) => (+v).toFixed(d);
+
+function blocks() {
+  const v = S.view;
+  const pmOn = (S.pmSm >> 4) > 2, lfoOn = pmOn && v.lfoDepth > 0.001, amOn = S.amDepth > 2, crOn = v.amount > 0;
+  return [
+    ['LFO · A4', lfoOn ? `${fx(v.lfoRate, 2)} Гц, ±${Math.round(v.lfoDepth * 100)}%` : 'выкл', lfoOn],
+    ['Модулятор', pmOn ? `${Math.round(v.fm)} Гц` : 'не влияет', pmOn],
+    ['Несущая · A3', `${Math.round(v.f)} Гц (${noteName(v.f)})`, true],
+    ['PM · A2', pmOn ? `глубина ${fx(S.pmDepth / 65536, 2)}` : 'выкл', pmOn],
+    ['Тремоло · A1', amOn ? `${Math.round(S.amDepth / 2.55)}%, ${fx(v.amRate)} Гц` : 'выкл', amOn],
+    ['Биткраш · A0', crOn ? `${8 - v.shift} бит, ÷${S.crushHold}` : 'выкл', crOn],
+    ['Выход D9', '8 бит, 16384 Гц', true],
+  ];
+}
+const chainEl = $('chain');
+function drawChain() {
+  chainEl.innerHTML = blocks().map(([t, s, on], i) =>
+    (i ? '<span class="arrow">→</span>' : '') + `<div class="blk${on ? ' on' : ''}"><b>${t}</b>${s}</div>`).join('');
+}
+function drawLive() {
+  const v = S.view;
+  for (const p of POTS) $('o_' + p.k).textContent = RAW[p.k];
+  $('live_carrier').textContent = `f = ${fx(v.f)} Гц ≈ ${noteName(v.f)}`;
+  $('live_pm').textContent = `модулятор ${fx(v.fm)} Гц · глубина ${fx(S.pmDepth / 65536, 2)} периода`;
+  $('live_lfo').textContent = `скорость ${fx(v.lfoRate, 2)} Гц · размах ±${Math.round(v.lfoDepth * 100)}%` + ((S.pmSm >> 4) <= 2 ? ' · поверните A2, иначе не слышно' : '');
+  $('live_am').textContent = `глубина ${Math.round(S.amDepth / 2.55)}% · скорость ${fx(v.amRate)} Гц` + (P.AM_MODE == 0 && RAW.light <= P.LIGHT_MIN ? ` · эффект начинается выше ${P.LIGHT_MIN}` : '');
+  $('live_crush').textContent = `осталось ${8 - v.shift} бит из 8 · отсчётов ${Math.round(AUDIO_RATE / S.crushHold)} в секунду` + (RAW.sensor <= P.SENSOR_MIN ? ` · эффект начинается выше ${P.SENSOR_MIN}` : '');
+}
+
+const sc = $('scope'), sp = $('spec'), scx = sc.getContext('2d'), spx = sp.getContext('2d');
+let tbuf, fbuf;
+function drawScope() {
+  const W = sc.width, H = sc.height;
+  scx.fillStyle = '#101418'; scx.fillRect(0, 0, W, H);
+  scx.strokeStyle = '#26323c'; scx.lineWidth = 1;
+  scx.beginPath(); scx.moveTo(0, H / 2); scx.lineTo(W, H / 2); scx.stroke();
+  scx.fillStyle = '#7d8a96'; scx.font = '22px sans-serif'; scx.fillText('осциллограмма', 12, 28);
+  if (!analyser) return;
+  tbuf ||= new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(tbuf);
+  const N = Math.round(ctx.sampleRate * 0.03);           // 30 мс на экран
+  let s0 = 0;
+  for (let i = 1; i < tbuf.length - N; i++) if (tbuf[i - 1] <= 0 && tbuf[i] > 0) { s0 = i; break; }
+  scx.strokeStyle = '#ffb020'; scx.lineWidth = 2.5; scx.beginPath();
+  for (let i = 0; i < N; i++) {
+    const x = i / (N - 1) * W, y = H / 2 - tbuf[s0 + i] * H * 0.45;
+    i ? scx.lineTo(x, y) : scx.moveTo(x, y);
+  }
+  scx.stroke();
+}
+function drawSpec() {
+  const W = sp.width, H = sp.height;
+  spx.fillStyle = '#101418'; spx.fillRect(0, 0, W, H);
+  spx.fillStyle = '#7d8a96'; spx.font = '22px sans-serif'; spx.fillText('спектр', 12, 28);
+  const lo = 40, hi = 8192, X = f => Math.log(f / lo) / Math.log(hi / lo) * W;
+  spx.font = '18px sans-serif';
+  for (const f of [100, 250, 500, 1000, 2000, 4000, 8000]) {
+    spx.fillStyle = '#26323c'; spx.fillRect(X(f), 0, 1, H);
+    spx.fillStyle = '#7d8a96'; spx.fillText(f >= 1000 ? f / 1000 + 'к' : f, X(f) + 4, H - 8);
+  }
+  if (!analyser) return;
+  fbuf ||= new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(fbuf);
+  const binHz = ctx.sampleRate / analyser.fftSize;
+  spx.fillStyle = 'rgba(42,125,225,.35)'; spx.strokeStyle = '#4ea3ff'; spx.lineWidth = 2;
+  spx.beginPath(); spx.moveTo(0, H);
+  for (let x = 0; x < W; x++) {
+    const f = lo * Math.pow(hi / lo, x / W), b = Math.min(fbuf.length - 1, Math.round(f / binHz));
+    spx.lineTo(x, H - fbuf[b] / 255 * (H - 36));
+  }
+  spx.lineTo(W, H); spx.closePath(); spx.fill(); spx.stroke();
+}
+function frame() {
+  if (!ctx || ctx.state !== 'running') updateControl();    // без звука — всё равно пересчитать подписи
+  drawChain(); drawLive(); drawScope(); drawSpec();
+  requestAnimationFrame(frame);
+}
+renderDefs(); applyExtras(); frame();
+</script>
+</body>
+</html>

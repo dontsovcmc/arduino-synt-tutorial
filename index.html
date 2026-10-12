@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Синтезатор на Arduino</title>
+<meta name="description" content="Интерактивные страницы про синтезатор на Arduino Nano и Mozzi: потенциометр и макетка, звуковые эффекты, анализатор звука.">
+<style>
+:root{
+  --bg:#f6f4ef; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#d9d5cc; --accent:#e0562b; --code:#f1eee7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#141416; --card:#1e1e22; --ink:#ececf0; --muted:#9a9aa3; --line:#34343a; --code:#26262b; }
+}
+:root[data-theme="dark"]{ --bg:#141416; --card:#1e1e22; --ink:#ececf0; --muted:#9a9aa3; --line:#34343a; --code:#26262b; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 16px 60px}
+h1{font-size:32px;margin:0 0 6px}
+h2{font-size:20px;margin:28px 0 10px}
+.lead{color:var(--muted);margin:0 0 24px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+a.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+a.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+a.card b{display:block;font-size:18px;margin-bottom:4px}
+a.card span{color:var(--muted);font-size:14px}
+.num{display:inline-block;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--bg);text-align:center;line-height:26px;font-weight:700;font-size:14px;margin-bottom:10px}
+code{font:14px ui-monospace,Menlo,monospace;background:var(--code);padding:1px 5px;border-radius:4px}
+a{color:var(--accent)}
+footer{margin-top:36px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>Синтезатор на Arduino</h1>
+<p class="lead">Интерактивные страницы для тех, кто собирает свой первый синтезатор на Arduino Nano и библиотеке Mozzi. Всё можно крутить мышкой, а эффекты — слушать прямо в браузере.</p>
+
+<div class="cards">
+  <a class="card" href="basics.html">
+    <div class="num">1</div>
+    <b>Потенциометр и макетка</b>
+    <span>Как ручка превращается в число в <code>analogRead</code> и как устроена макетная плата.</span>
+  </a>
+  <a class="card" href="effects.html">
+    <div class="num">2</div>
+    <b>Звуковые эффекты Mozzi</b>
+    <span>Фазовая модуляция, LFO, тремоло, биткраш: формулы скетча, звук и осциллограмма.</span>
+  </a>
+  <a class="card" href="scope/">
+    <div class="num">3</div>
+    <b>Анализатор звука</b>
+    <span>Спектр, осциллограмма, уровень и нота сигнала с микрофонного входа компьютера.</span>
+  </a>
+</div>
+
+<h2>Скетч</h2>
+<p><a href="https://github.com/dontsovcmc/arduino-synt-tutorial/blob/main/sketches/sine_pm_am_crush_lfo2.ino"><code>sine_pm_am_crush_lfo2.ino</code></a> — синусоидальный генератор с фазовой модуляцией, тремоло, биткрашем и LFO. Его разбирает страница «Звуковые эффекты».</p>
+<p>Автор скетча — <a href="https://t.me/deresonaa">t.me/deresonaa</a>, скетч создан в рамках её курса по строительству синтезатора.</p>
+
+<footer>Исходники: <a href="https://github.com/dontsovcmc/arduino-synt-tutorial">github.com/dontsovcmc/arduino-synt-tutorial</a></footer>
+</main>
+</body>
+</html>
