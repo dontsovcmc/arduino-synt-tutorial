@@ -74,12 +74,12 @@ pre{font:14px/1.45 ui-monospace,Menlo,monospace;background:color-mix(in srgb,var
 <main>
 <nav class="top"><a href="./">← Все разделы</a><span class="muted">Синтезатор на Arduino</span></nav>
 <h1>Фоторезистор</h1>
-<p class="lead">Датчик света: чем ярче, тем меньше его сопротивление. Подключим к Arduino Nano и закроем от солнца ширмой — крутите ручку.</p>
+<p class="lead">Датчик света: чем ярче, тем меньше его сопротивление. Подключим к Arduino Nano и закроем от солнца ширмой.</p>
 
 <section id="ldr">
   <h2>Ширма между солнцем и датчиком</h2>
   <p>Фоторезистор — это резистор из полупроводника, который «проводит» тем лучше, чем больше на него падает света. В темноте у него около 1 МОм, при обычном комнатном свете — 5–20 кОм, на ярком солнце — сотни ом.</p>
-  <p class="muted">Крутите ручку мышкой (или пальцем) — ширма поедет вниз и закроет солнце.</p>
+  <p class="muted">Тяните ширму мышкой (или пальцем) или двигайте ползунок под картинкой — ширма закроет солнце.</p>
 
   <svg id="scene" class="scene" viewBox="0 0 760 330" aria-label="Солнце, ширма и фоторезистор">
     <defs>
@@ -108,18 +108,6 @@ pre{font:14px/1.45 ui-monospace,Menlo,monospace;background:color-mix(in srgb,var
       <line x1="10" y1="30" x2="10" y2="120" stroke="#999" stroke-width="3"/>
       <text y="-42" text-anchor="middle" font-size="14" font-weight="700">фоторезистор</text>
       <text id="ldrR" y="150" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--sig)"></text>
-    </g>
-    <!-- ручка ширмы -->
-    <g transform="translate(250 255)">
-      <path id="kTrack" fill="none" stroke="var(--line)" stroke-width="5" stroke-linecap="round"/>
-      <path id="kArc" fill="none" stroke="var(--sig)" stroke-width="5" stroke-linecap="round"/>
-      <g id="knob" style="cursor:grab">
-        <circle r="30" fill="#d6d6d6" stroke="#777" stroke-width="2"/>
-        <circle r="20" fill="#e9e9e9" stroke="#666" stroke-width="2" stroke-dasharray="3 2"/>
-        <rect x="-3" y="-28" width="6" height="22" rx="2" fill="#555"/>
-        <circle cy="-20" r="4" fill="var(--sig)"/>
-      </g>
-      <text y="60" text-anchor="middle" font-size="13" style="fill:var(--muted)">ручка ширмы</text>
     </g>
   </svg>
 
@@ -242,17 +230,10 @@ amDepth = map(light, LIGHT_MIN, LIGHT_MAX, 0, 255);   // свет → глуби
     const visTop = Math.max(yTop, y + H);
     if (visTop < yBot) $('beamR').setAttribute('points', `${SX},${visTop} ${LDR[0]},${toLdr(visTop)} ${LDR[0]},${toLdr(yBot)} ${SX},${yBot}`);
     else $('beamR').setAttribute('points', '');
-    // ручка
-    const ang = -150 + k * 300;
-    $('knob').setAttribute('transform', `rotate(${ang})`);
-    const pt = a => [34 * Math.sin(a * Math.PI / 180), -34 * Math.cos(a * Math.PI / 180)].map(v => v.toFixed(1)).join(' ');
-    const arc = (a, b) => `M ${pt(a)} A 34 34 0 ${b - a > 180 ? 1 : 0} 1 ${pt(b)}`;
-    $('kTrack').setAttribute('d', arc(-150, 150));
-    $('kArc').setAttribute('d', k > 0.002 ? arc(-150, ang) : '');
 
     // физика: освещённость → сопротивление → делитель
     const roomLux = 0.5 * Math.pow(600, room.value / 1000);       // 0.5 … 300 лк
-    const lux = roomLux + 50000 * open;
+    const lux = roomLux + 3000 * Math.pow(open, 4);                // солнце через окно; край тени мягкий
     const R = Math.min(1e6, Math.max(150, 15000 * Math.pow(lux / 10, -0.7)));
     const V = 5 * 10000 / (R + 10000);
     const adc = Math.min(1023, Math.round(V / 5 * 1023));
@@ -273,20 +254,17 @@ amDepth = map(light, LIGHT_MIN, LIGHT_MAX, 0, 255);   // свет → глуби
   shade.addEventListener('input', draw);
   room.addEventListener('input', draw);
 
-  // вращение ручки
-  const svg = $('scene'), knob = $('knob');
-  let turn = false;
-  knob.style.touchAction = 'none';
-  knob.addEventListener('pointerdown', e => { turn = true; knob.setPointerCapture(e.pointerId); knob.style.cursor = 'grabbing'; });
-  knob.addEventListener('pointermove', e => {
-    if (!turn) return;
-    const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
-    const q = p.matrixTransform(svg.getScreenCTM().inverse());
-    const a = Math.atan2(q.x - 250, 255 - q.y) * 180 / Math.PI;
-    if (Math.abs(a) > 165) return;
-    shade.value = Math.round(Math.max(0, Math.min(1, (a + 150) / 300)) * 1000); draw();
+  // ширму можно тянуть мышкой или пальцем
+  const svg = $('scene'), scr = $('screen');
+  let drag = false, dy = 0;
+  const svgY = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()).y; };
+  scr.style.cursor = 'grab'; scr.style.touchAction = 'none';
+  scr.addEventListener('pointerdown', e => { drag = true; scr.setPointerCapture(e.pointerId); scr.style.cursor = 'grabbing'; dy = svgY(e) - (Y_UP + (Y_DOWN - Y_UP) * shade.value / 1000); });
+  scr.addEventListener('pointermove', e => {
+    if (!drag) return;
+    shade.value = Math.round(Math.max(0, Math.min(1, (svgY(e) - dy - Y_UP) / (Y_DOWN - Y_UP))) * 1000); draw();
   });
-  knob.addEventListener('pointerup', () => { turn = false; knob.style.cursor = 'grab'; });
+  scr.addEventListener('pointerup', () => { drag = false; scr.style.cursor = 'grab'; });
   draw();
 })();
 </script>
