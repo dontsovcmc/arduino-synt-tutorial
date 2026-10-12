@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Фоторезистор</title>
+<style>
+:root{
+  --bg:#f6f4ef; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#d9d5cc;
+  --v5:#d43b2f; --gnd:#2f5fd4; --sig:#e08a00; --flow:#ffcc00; --metal:#b9b3a6;
+  --board:#efeadf; --hole:#3a3a3a; --accent:#0a7d5a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416; --card:#1e1e22; --ink:#ececf0; --muted:#9a9aa3; --line:#34343a;
+    --board:#2a2925; --hole:#0c0c0c; --metal:#8f8a7e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416; --card:#1e1e22; --ink:#ececf0; --muted:#9a9aa3; --line:#34343a;
+  --board:#2a2925; --hole:#0c0c0c; --metal:#8f8a7e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:30px;margin:8px 0 4px}
+h2{font-size:22px;margin:0 0 6px}
+.lead{color:var(--muted);margin:0 0 24px}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:0 0 24px}
+.num{display:inline-block;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);text-align:center;line-height:28px;font-weight:700;margin-right:8px;font-size:15px}
+p{margin:6px 0}
+.muted{color:var(--muted)}
+svg{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
+svg text{fill:var(--ink)}
+.row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:12px 0}
+input[type=range]{flex:1;min-width:200px;accent-color:var(--sig)}
+button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--ink)}
+label.chk{display:flex;gap:6px;align-items:center;cursor:pointer}
+.big{font:700 22px ui-monospace,Menlo,monospace}
+code{font:14px ui-monospace,Menlo,monospace;background:color-mix(in srgb,var(--ink) 8%,transparent);padding:1px 5px;border-radius:4px}
+.status{padding:8px 12px;border-radius:8px;font-weight:600}
+.status.off{background:color-mix(in srgb,var(--gnd) 14%,transparent)}
+.status.on{background:color-mix(in srgb,var(--flow) 30%,transparent)}
+ul{margin:6px 0;padding-left:22px}
+.flow{fill:none;stroke:var(--flow);stroke-width:4;stroke-dasharray:4 12;stroke-linecap:round;animation:flow .6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-16}}
+@media (prefers-reduced-motion: reduce){.flow{animation-duration:3s}}
+.hole{cursor:crosshair}
+.wire{cursor:pointer}
+.ghost{cursor:pointer}
+.src a{color:var(--muted)}
+.potwrap{display:flex;gap:12px;align-items:center}
+.potwrap #potPic{flex:0 0 200px;width:200px}
+.potwrap #potSvg{flex:1;min-width:0}
+@media (max-width:640px){.potwrap{flex-direction:column}.potwrap #potPic{width:220px;flex-basis:auto}}
+nav.top{display:flex;justify-content:space-between;gap:12px;font-size:14px;margin-bottom:8px}
+nav.top a,nav.pager a{color:var(--muted);text-decoration:none}
+nav.top a:hover,nav.pager a:hover{color:var(--ink)}
+nav.pager{display:flex;justify-content:space-between;gap:12px;margin-top:8px;font-size:15px}
+nav.pager a{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--card)}
+.scene{background:linear-gradient(#bfe3ff,#e9f5ff);border-radius:12px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .scene{background:linear-gradient(#1d2a3a,#24303d)}}
+:root[data-theme="dark"] .scene{background:linear-gradient(#1d2a3a,#24303d)}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.readout>div{background:color-mix(in srgb,var(--ink) 5%,transparent);border-radius:10px;padding:8px 12px}
+.readout small{display:block;color:var(--muted);font-size:13px}
+.barwrap{height:14px;border-radius:7px;background:color-mix(in srgb,var(--ink) 10%,transparent);overflow:hidden;margin-top:6px}
+.barwrap i{display:block;height:100%;background:var(--sig);width:0}
+pre{font:14px/1.45 ui-monospace,Menlo,monospace;background:color-mix(in srgb,var(--ink) 6%,transparent);border-radius:8px;padding:10px 12px;overflow-x:auto;margin:8px 0}
+</style>
+</head>
+<body>
+<main>
+<nav class="top"><a href="./">← Все разделы</a><span class="muted">Синтезатор на Arduino</span></nav>
+<h1>Фоторезистор</h1>
+<p class="lead">Датчик света: чем ярче, тем меньше его сопротивление. Подключим к Arduino Nano и закроем от солнца ширмой — крутите ручку.</p>
+
+<section id="ldr">
+  <h2>Ширма между солнцем и датчиком</h2>
+  <p>Фоторезистор — это резистор из полупроводника, который «проводит» тем лучше, чем больше на него падает света. В темноте у него около 1 МОм, при обычном комнатном свете — 5–20 кОм, на ярком солнце — сотни ом.</p>
+  <p class="muted">Крутите ручку мышкой (или пальцем) — ширма поедет вниз и закроет солнце.</p>
+
+  <svg id="scene" class="scene" viewBox="0 0 760 330" aria-label="Солнце, ширма и фоторезистор">
+    <defs>
+      <radialGradient id="sunG"><stop offset="0" stop-color="#fff6b0"/><stop offset=".6" stop-color="#ffd23f"/><stop offset="1" stop-color="#ffb000"/></radialGradient>
+    </defs>
+    <!-- лучи солнца -->
+    <g id="rays" stroke="#ffc400" stroke-width="5" stroke-linecap="round"></g>
+    <circle cx="110" cy="150" r="48" fill="url(#sunG)"/>
+    <text x="110" y="232" text-anchor="middle" font-size="14" font-weight="700" style="fill:#b37a00">солнце</text>
+    <!-- луч к датчику -->
+    <polygon id="beamL" fill="#ffd84a" opacity=".45"/>
+    <polygon id="beamR" fill="#ffd84a" opacity=".45"/>
+    <!-- ширма -->
+    <line x1="420" y1="6" x2="420" y2="300" stroke="var(--metal)" stroke-width="3" stroke-dasharray="6 6"/>
+    <g id="screen">
+      <rect x="410" y="0" width="20" height="150" rx="3" fill="#6d5a45" stroke="#3d3125" stroke-width="2"/>
+      <rect x="405" y="-8" width="30" height="10" rx="3" fill="#3d3125"/>
+    </g>
+    <text x="420" y="320" text-anchor="middle" font-size="13" style="fill:var(--muted)">ширма</text>
+    <!-- фоторезистор: вид сбоку, «лицом» к солнцу -->
+    <g transform="translate(640 150)">
+      <circle id="ldrGlow" r="44" fill="#ffd84a" opacity="0"/>
+      <circle r="30" fill="#e8e1d2" stroke="#8a7d66" stroke-width="2"/>
+      <path d="M-18 -16 H18 V-8 H-18 V0 H18 V8 H-18 V16 H18" fill="none" stroke="#c0392b" stroke-width="3"/>
+      <line x1="-10" y1="30" x2="-10" y2="120" stroke="#999" stroke-width="3"/>
+      <line x1="10" y1="30" x2="10" y2="120" stroke="#999" stroke-width="3"/>
+      <text y="-42" text-anchor="middle" font-size="14" font-weight="700">фоторезистор</text>
+      <text id="ldrR" y="150" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--sig)"></text>
+    </g>
+    <!-- ручка ширмы -->
+    <g transform="translate(250 255)">
+      <path id="kTrack" fill="none" stroke="var(--line)" stroke-width="5" stroke-linecap="round"/>
+      <path id="kArc" fill="none" stroke="var(--sig)" stroke-width="5" stroke-linecap="round"/>
+      <g id="knob" style="cursor:grab">
+        <circle r="30" fill="#d6d6d6" stroke="#777" stroke-width="2"/>
+        <circle r="20" fill="#e9e9e9" stroke="#666" stroke-width="2" stroke-dasharray="3 2"/>
+        <rect x="-3" y="-28" width="6" height="22" rx="2" fill="#555"/>
+        <circle cy="-20" r="4" fill="var(--sig)"/>
+      </g>
+      <text y="60" text-anchor="middle" font-size="13" style="fill:var(--muted)">ручка ширмы</text>
+    </g>
+  </svg>
+
+  <div class="row">
+    <span>ширма поднята</span>
+    <input id="shade" type="range" min="0" max="1000" value="0" aria-label="Положение ширмы">
+    <span>закрыла солнце</span>
+  </div>
+  <div class="row">
+    <span>в комнате темно</span>
+    <input id="room" type="range" min="0" max="1000" value="450" aria-label="Свет в комнате">
+    <span>светло</span>
+  </div>
+
+  <div class="readout">
+    <div><small>освещённость</small><span class="big" id="oLux"></span></div>
+    <div><small>сопротивление фоторезистора</small><span class="big" id="oR"></span></div>
+    <div><small>напряжение на A1</small><span class="big" id="oV"></span></div>
+    <div><small>analogRead(A1)</small><span class="big" id="oA"></span><div class="barwrap"><i id="oBar"></i></div></div>
+  </div>
+</section>
+
+<section id="wiring">
+  <h2>Как подключить к Arduino Nano</h2>
+  <p>Сам по себе фоторезистор не выдаёт напряжение — он только меняет сопротивление. Arduino же умеет измерять <b>напряжение</b>. Поэтому к фоторезистору добавляют обычный постоянный резистор, и получается <b>делитель напряжения</b> — как потенциометр, только «ползунок» двигает свет.</p>
+
+  <svg id="sch" viewBox="0 0 760 360" aria-label="Схема: +5 В — фоторезистор — A1 — резистор 10 кОм — GND">
+    <text x="210" y="28" text-anchor="middle" font-weight="700" style="fill:var(--v5)">+5 В</text>
+    <line x1="190" y1="40" x2="230" y2="40" stroke="var(--v5)" stroke-width="4"/>
+    <line x1="210" y1="40" x2="210" y2="70" stroke="var(--v5)" stroke-width="3"/>
+    <!-- фоторезистор -->
+    <rect x="190" y="70" width="40" height="80" rx="4" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/>
+    <path d="M200 82 H220 V94 H200 V106 H220 V118 H200 V130 H220 V140" fill="none" stroke="#c0392b" stroke-width="2.5"/>
+    <g stroke="#e0a800" stroke-width="3" stroke-linecap="round">
+      <line x1="140" y1="80" x2="180" y2="100"/><line x1="134" y1="104" x2="174" y2="124"/>
+      <polyline points="170,92 180,100 168,103" fill="none"/><polyline points="164,116 174,124 162,127" fill="none"/>
+    </g>
+    <text x="246" y="104" font-size="14">фоторезистор</text>
+    <text id="sR1" x="246" y="124" font-size="14" font-weight="700" style="fill:var(--sig)"></text>
+    <line x1="210" y1="150" x2="210" y2="210" stroke="var(--ink)" stroke-width="3"/>
+    <!-- узел -->
+    <circle cx="210" cy="180" r="6" fill="var(--sig)"/>
+    <line x1="210" y1="180" x2="413" y2="180" stroke="var(--sig)" stroke-width="3"/>
+    <text id="sV" x="270" y="170" font-weight="700" style="fill:var(--sig)"></text>
+    <!-- 10 кОм -->
+    <rect x="196" y="210" width="28" height="80" rx="3" fill="#d8bf8f" stroke="#7a6440" stroke-width="2"/>
+    <rect x="196" y="222" width="28" height="5" fill="#7a3d12"/><rect x="196" y="234" width="28" height="5" fill="#111"/><rect x="196" y="246" width="28" height="5" fill="#e67e22"/><rect x="196" y="272" width="28" height="5" fill="#c9a227"/>
+    <text x="240" y="248" font-size="14">резистор 10 кОм</text>
+    <text x="240" y="266" font-size="13" style="fill:var(--muted)">коричневый-чёрный-</text><text x="240" y="282" font-size="13" style="fill:var(--muted)">оранжевый</text>
+    <line x1="210" y1="290" x2="210" y2="320" stroke="var(--gnd)" stroke-width="3"/>
+    <line x1="186" y1="320" x2="234" y2="320" stroke="var(--gnd)" stroke-width="4"/>
+    <line x1="194" y1="328" x2="226" y2="328" stroke="var(--gnd)" stroke-width="3"/>
+    <line x1="202" y1="336" x2="218" y2="336" stroke="var(--gnd)" stroke-width="2"/>
+    <text x="210" y="356" text-anchor="middle" font-weight="700" style="fill:var(--gnd)">GND</text>
+    <!-- Nano -->
+    <rect x="420" y="60" width="320" height="250" rx="12" fill="#1f5fa8"/>
+    <text x="580" y="90" text-anchor="middle" font-weight="700" style="fill:#fff">Arduino Nano</text>
+    <circle cx="420" cy="180" r="7" fill="#e9e9e9" stroke="#333"/>
+    <text x="434" y="185" font-weight="700" style="fill:#fff">A1</text>
+    <rect x="470" y="120" width="250" height="140" rx="8" fill="#0d3c70"/>
+    <text id="sA" x="595" y="175" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="20" font-weight="700" style="fill:#fff"></text>
+    <text id="sAm" x="595" y="215" text-anchor="middle" font-size="14" style="fill:#bcd4f0"></text>
+    <text x="595" y="240" text-anchor="middle" font-size="12" style="fill:#bcd4f0">тремоло в скетче (A1)</text>
+  </svg>
+
+  <ul>
+    <li>Одна нога фоторезистора — на <b style="color:var(--v5)">+5V</b>, другая — на пин <b style="color:var(--sig)">A1</b>.</li>
+    <li>От <b>A1</b> же — резистор <b>10 кОм</b> на <b style="color:var(--gnd)">GND</b>. У фоторезистора нет полярности, ноги можно не различать.</li>
+    <li>Больше света → меньше сопротивление фоторезистора → напряжение на A1 ближе к 5 В → <code>analogRead</code> больше.</li>
+    <li>Если поменять местами фоторезистор и 10 кОм, всё станет наоборот: больше света — меньше число.</li>
+  </ul>
+  <p class="muted">Почему 10 кОм: делитель чувствительнее всего, когда постоянный резистор примерно равен сопротивлению фоторезистора при «рабочем» освещении. Для комнаты подходит 10 кОм, для тёмного помещения — 47–100 кОм, для улицы — 1 кОм.</p>
+
+  <pre>int light = analogRead(A1);    // 0 — темно, 1023 — очень светло
+// в скетче sine_pm_am_crush_lfo2.ino:
+amDepth = map(light, LIGHT_MIN, LIGHT_MAX, 0, 255);   // свет → глубина тремоло</pre>
+  <p class="muted">Формулы на странице: <code>U = 5 В × 10 кОм / (R + 10 кОм)</code>, сопротивление считается по типичной кривой фоторезистора GL5528 (около 15 кОм при 10 люкс). Настоящий датчик может отличаться в 2–3 раза, поэтому <code>LIGHT_MIN</code> в скетче подбирают по факту: посмотрите, что показывает <code>analogRead</code> в вашей комнате.</p>
+</section>
+
+<nav class="pager"><a href="potentiometer.html">← Потенциометр</a><a href="sensor.html">Сенсор касания →</a></nav>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const shade = $('shade'), room = $('room');
+  const SUN = [110, 150], LDR = [640, 150], SX = 420, BEAM_SUN = 48, BEAM_LDR = 30;
+  const LIGHT_MIN = 147;
+
+  // лучи солнца
+  const rays = $('rays');
+  for (let i = 0; i < 12; i++) {
+    const a = i * Math.PI / 6, l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    l.setAttribute('x1', SUN[0] + Math.cos(a) * 58); l.setAttribute('y1', SUN[1] + Math.sin(a) * 58);
+    l.setAttribute('x2', SUN[0] + Math.cos(a) * 74); l.setAttribute('y2', SUN[1] + Math.sin(a) * 74);
+    rays.appendChild(l);
+  }
+  // луч — трапеция от края солнца к датчику; на месте ширмы его высота:
+  const t = (SX - SUN[0]) / (LDR[0] - SUN[0]);
+  const halfAt = BEAM_SUN + (BEAM_LDR - BEAM_SUN) * t;            // полувысота луча у ширмы
+  const yTop = LDR[1] - halfAt, yBot = LDR[1] + halfAt;
+  $('beamL').setAttribute('points', `${SUN[0]},${SUN[1] - BEAM_SUN} ${SX},${yTop} ${SX},${yBot} ${SUN[0]},${SUN[1] + BEAM_SUN}`);
+  // y ширмы: от «поднята» до «закрыла» (низ ширмы ниже низа луча)
+  const H = 150, Y_UP = yTop - H - 40, Y_DOWN = yBot - H + 12;
+  // точка на грани датчика для высоты y у ширмы
+  const toLdr = y => LDR[1] + (y - LDR[1]) * BEAM_LDR / halfAt;
+
+  const fmtR = r => r >= 1e6 ? (r / 1e6).toFixed(2) + ' МОм' : r >= 1e3 ? (r / 1e3).toFixed(1) + ' кОм' : Math.round(r) + ' Ом';
+  const fmtLux = l => l >= 1000 ? Math.round(l / 1000) + ' 000 лк' : Math.round(l) + ' лк';
+
+  function draw() {
+    const k = shade.value / 1000;
+    const y = Y_UP + (Y_DOWN - Y_UP) * k;                          // верх ширмы
+    $('screen').setAttribute('transform', `translate(0 ${y})`);
+    // какая часть луча проходит ниже ширмы
+    const blockTop = Math.max(yTop, y), blockBot = Math.min(yBot, y + H);
+    const blocked = Math.max(0, blockBot - blockTop);
+    const open = 1 - blocked / (yBot - yTop);
+    // видимая часть луча после ширмы (открыта нижняя часть, ширма едет сверху вниз)
+    const visTop = Math.max(yTop, y + H);
+    if (visTop < yBot) $('beamR').setAttribute('points', `${SX},${visTop} ${LDR[0]},${toLdr(visTop)} ${LDR[0]},${toLdr(yBot)} ${SX},${yBot}`);
+    else $('beamR').setAttribute('points', '');
+    // ручка
+    const ang = -150 + k * 300;
+    $('knob').setAttribute('transform', `rotate(${ang})`);
+    const pt = a => [34 * Math.sin(a * Math.PI / 180), -34 * Math.cos(a * Math.PI / 180)].map(v => v.toFixed(1)).join(' ');
+    const arc = (a, b) => `M ${pt(a)} A 34 34 0 ${b - a > 180 ? 1 : 0} 1 ${pt(b)}`;
+    $('kTrack').setAttribute('d', arc(-150, 150));
+    $('kArc').setAttribute('d', k > 0.002 ? arc(-150, ang) : '');
+
+    // физика: освещённость → сопротивление → делитель
+    const roomLux = 0.5 * Math.pow(600, room.value / 1000);       // 0.5 … 300 лк
+    const lux = roomLux + 50000 * open;
+    const R = Math.min(1e6, Math.max(150, 15000 * Math.pow(lux / 10, -0.7)));
+    const V = 5 * 10000 / (R + 10000);
+    const adc = Math.min(1023, Math.round(V / 5 * 1023));
+    const am = Math.round(Math.max(0, adc - LIGHT_MIN) * 255 / (1023 - LIGHT_MIN));
+
+    $('ldrGlow').setAttribute('opacity', Math.min(.9, Math.log10(lux) / 5.5).toFixed(2));
+    $('ldrR').textContent = fmtR(R);
+    $('oLux').textContent = fmtLux(lux);
+    $('oR').textContent = fmtR(R);
+    $('oV').textContent = V.toFixed(2) + ' В';
+    $('oA').textContent = adc;
+    $('oBar').style.width = (adc / 1023 * 100) + '%';
+    $('sR1').textContent = fmtR(R);
+    $('sV').textContent = V.toFixed(2) + ' В';
+    $('sA').textContent = 'analogRead = ' + adc;
+    $('sAm').textContent = adc <= LIGHT_MIN ? `ниже LIGHT_MIN = ${LIGHT_MIN}: тремоло нет` : `глубина тремоло ${Math.round(am / 2.55)}%`;
+  }
+  shade.addEventListener('input', draw);
+  room.addEventListener('input', draw);
+
+  // вращение ручки
+  const svg = $('scene'), knob = $('knob');
+  let turn = false;
+  knob.style.touchAction = 'none';
+  knob.addEventListener('pointerdown', e => { turn = true; knob.setPointerCapture(e.pointerId); knob.style.cursor = 'grabbing'; });
+  knob.addEventListener('pointermove', e => {
+    if (!turn) return;
+    const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
+    const q = p.matrixTransform(svg.getScreenCTM().inverse());
+    const a = Math.atan2(q.x - 250, 255 - q.y) * 180 / Math.PI;
+    if (Math.abs(a) > 165) return;
+    shade.value = Math.round(Math.max(0, Math.min(1, (a + 150) / 300)) * 1000); draw();
+  });
+  knob.addEventListener('pointerup', () => { turn = false; knob.style.cursor = 'grab'; });
+  draw();
+})();
+</script>
+</body>
+</html>

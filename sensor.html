@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сенсор касания</title>
+<style>
+:root{
+  --bg:#f6f4ef; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#d9d5cc;
+  --v5:#d43b2f; --gnd:#2f5fd4; --sig:#e08a00; --flow:#ffcc00; --metal:#b9b3a6;
+  --board:#efeadf; --hole:#3a3a3a; --accent:#0a7d5a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416; --card:#1e1e22; --ink:#ececf0; --muted:#9a9aa3; --line:#34343a;
+    --board:#2a2925; --hole:#0c0c0c; --metal:#8f8a7e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416; --card:#1e1e22; --ink:#ececf0; --muted:#9a9aa3; --line:#34343a;
+  --board:#2a2925; --hole:#0c0c0c; --metal:#8f8a7e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:30px;margin:8px 0 4px}
+h2{font-size:22px;margin:0 0 6px}
+.lead{color:var(--muted);margin:0 0 24px}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:0 0 24px}
+.num{display:inline-block;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);text-align:center;line-height:28px;font-weight:700;margin-right:8px;font-size:15px}
+p{margin:6px 0}
+.muted{color:var(--muted)}
+svg{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
+svg text{fill:var(--ink)}
+.row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:12px 0}
+input[type=range]{flex:1;min-width:200px;accent-color:var(--sig)}
+button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--ink)}
+label.chk{display:flex;gap:6px;align-items:center;cursor:pointer}
+.big{font:700 22px ui-monospace,Menlo,monospace}
+code{font:14px ui-monospace,Menlo,monospace;background:color-mix(in srgb,var(--ink) 8%,transparent);padding:1px 5px;border-radius:4px}
+.status{padding:8px 12px;border-radius:8px;font-weight:600}
+.status.off{background:color-mix(in srgb,var(--gnd) 14%,transparent)}
+.status.on{background:color-mix(in srgb,var(--flow) 30%,transparent)}
+ul{margin:6px 0;padding-left:22px}
+.flow{fill:none;stroke:var(--flow);stroke-width:4;stroke-dasharray:4 12;stroke-linecap:round;animation:flow .6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-16}}
+@media (prefers-reduced-motion: reduce){.flow{animation-duration:3s}}
+.hole{cursor:crosshair}
+.wire{cursor:pointer}
+.ghost{cursor:pointer}
+.src a{color:var(--muted)}
+.potwrap{display:flex;gap:12px;align-items:center}
+.potwrap #potPic{flex:0 0 200px;width:200px}
+.potwrap #potSvg{flex:1;min-width:0}
+@media (max-width:640px){.potwrap{flex-direction:column}.potwrap #potPic{width:220px;flex-basis:auto}}
+nav.top{display:flex;justify-content:space-between;gap:12px;font-size:14px;margin-bottom:8px}
+nav.top a,nav.pager a{color:var(--muted);text-decoration:none}
+nav.top a:hover,nav.pager a:hover{color:var(--ink)}
+nav.pager{display:flex;justify-content:space-between;gap:12px;margin-top:8px;font-size:15px}
+nav.pager a{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--card)}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.readout>div{background:color-mix(in srgb,var(--ink) 5%,transparent);border-radius:10px;padding:8px 12px}
+.readout small{display:block;color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+select{font:inherit;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+canvas{width:100%;height:140px;display:block;background:#101418;border-radius:10px}
+pre{font:14px/1.45 ui-monospace,Menlo,monospace;background:color-mix(in srgb,var(--ink) 6%,transparent);border-radius:8px;padding:10px 12px;overflow-x:auto;margin:8px 0}
+.note{border-left:4px solid var(--sig);padding:6px 12px;background:color-mix(in srgb,var(--sig) 8%,transparent);border-radius:0 8px 8px 0}
+</style>
+</head>
+<body>
+<main>
+<nav class="top"><a href="./">← Все разделы</a><span class="muted">Синтезатор на Arduino</span></nav>
+<h1>Сенсор касания</h1>
+<p class="lead">Самый простой датчик: два голых провода. Один идёт к аналоговому пину, другой — к GND. Дотроньтесь до обоих пальцами или воткните их в яблоко — и Arduino это почувствует.</p>
+
+<section id="touch">
+  <h2>Как это работает</h2>
+  <p>Человек и яблоко немного проводят ток — у них есть сопротивление: у сухих пальцев это мегаомы, у влажных и плотно прижатых — десятки килоом, у яблока — десятки–сотни килоом. Если пальцами замкнуть два провода, между пином и GND появляется такой «резистор».</p>
+  <p>Но одного его мало: нужен второй резистор — <b>подтяжка</b> от пина к +5 В. Вместе они образуют делитель напряжения. Без касания пин подтянут к 5 В (<code>analogRead</code> ≈ 1023), при касании напряжение падает — тем сильнее, чем меньше сопротивление пальцев.</p>
+
+  <div class="tabs" role="group" aria-label="Что замыкает провода">
+    <button data-mode="finger" aria-pressed="true">✋ Пальцы</button>
+    <button data-mode="apple" aria-pressed="false">🍎 Яблоко</button>
+  </div>
+
+  <svg id="scene" viewBox="0 0 760 330" aria-label="Arduino Nano, подтяжка и два провода"></svg>
+
+  <div class="row">
+    <span id="sLo">не касаюсь</span>
+    <input id="press" type="range" min="0" max="1000" value="0" aria-label="Сила касания">
+    <span id="sHi">крепко, влажными пальцами</span>
+  </div>
+  <div class="row">
+    <label>Подтяжка к +5 В:
+      <select id="pull">
+        <option value="1000000">внешний резистор 1 МОм</option>
+        <option value="100000">внешний резистор 100 кОм</option>
+        <option value="35000">INPUT_PULLUP — встроенный, ~35 кОм</option>
+        <option value="0">нет подтяжки</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="readout">
+    <div><small>сопротивление касания</small><span class="big" id="oR"></span></div>
+    <div><small>напряжение на A0</small><span class="big" id="oV"></span></div>
+    <div><small>analogRead(A0)</small><span class="big" id="oA"></span></div>
+    <div><small>касание = 1023 − analogRead</small><span class="big" id="oT"></span></div>
+  </div>
+  <canvas id="plot" width="900" height="280" aria-label="График analogRead во времени"></canvas>
+  <p class="muted" id="hint"></p>
+</section>
+
+<section id="wiring">
+  <h2>Как подключить к Arduino Nano</h2>
+  <ul>
+    <li>Провод 1 — от пина <b style="color:var(--sig)">A0</b>, конец зачистить на 1–2 см.</li>
+    <li>Провод 2 — от <b style="color:var(--gnd)">GND</b>, тоже зачищенный.</li>
+    <li>Резистор <b>1 МОм</b> (коричневый-чёрный-зелёный) — между <b>A0</b> и <b style="color:var(--v5)">+5V</b>. Это подтяжка. Вместо него можно включить встроенную подтяжку <code>INPUT_PULLUP</code> — без деталей, но она слабее чувствует лёгкие касания: ~35 кОм рядом с мегаомами пальцев почти не делится.</li>
+    <li>Для яблока: воткните оба провода в мякоть на расстоянии 2–4 см. Можно воткнуть в яблоко только провод от A0, а провод от GND держать в руке — тогда касание яблока второй рукой тоже сработает.</li>
+  </ul>
+
+  <pre>void setup() {
+  pinMode(A0, INPUT_PULLUP);        // если нет внешнего резистора 1 МОм
+}
+
+void loop() {
+  int raw = analogRead(A0);         // 1023 — никто не трогает
+  int touch = 1023 - raw;           // 0 — нет касания, больше — сильнее
+}</pre>
+
+  <p class="note"><b>В скетче <code>sine_pm_am_crush_lfo2.ino</code></b> сенсор на A0 управляет биткрашем и ждёт, что при касании число <b>растёт</b> (<code>SENSOR_MIN 300</code> → <code>SENSOR_MAX 500</code>). При такой схеме оно падает. Два выхода: подключить наоборот — резистор 1 МОм от A0 на <b>GND</b>, а второй провод на <b>+5V</b> (тогда без касания 0, с касанием больше), или в коде заменить чтение на <code>1023 - mozziAnalogRead(SENSOR_PIN)</code>. После этого подберите <code>SENSOR_MIN</code> и <code>SENSOR_MAX</code> по своим пальцам.</p>
+
+  <p class="muted">Это безопасно: от USB идёт 5 В, а через пальцы течёт меньше тысячной доли миллиампера — его не почувствовать. Так можно делать только с питанием от USB или батареек, никогда не с сетью 220 В.</p>
+  <p class="muted">Числа на странице примерные: сопротивление кожи меняется в десятки раз от влажности, площади и силы касания, у яблок — от сорта и того, насколько глубоко воткнуты провода. Поэтому пороги в скетче всегда подбирают по факту.</p>
+</section>
+
+<nav class="pager"><a href="photoresistor.html">← Фоторезистор</a><a href="effects.html">Звуковые эффекты →</a></nav>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = $('scene'), press = $('press'), pull = $('pull');
+  let mode = 'finger';
+  const el = (tag, attrs, parent = svg) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    parent.appendChild(e); return e;
+  };
+
+  // --- Nano ---
+  el('rect', { x: 20, y: 60, width: 200, height: 220, rx: 12, fill: '#1f5fa8' });
+  el('text', { x: 120, y: 92, 'text-anchor': 'middle', 'font-weight': 700, style: 'fill:#fff' }).textContent = 'Arduino Nano';
+  const pins = { v5: [220, 130, '5V'], a0: [220, 190, 'A0'], gnd: [220, 250, 'GND'] };
+  for (const k in pins) {
+    const [x, y, t] = pins[k];
+    el('circle', { cx: x, cy: y, r: 7, fill: '#e9e9e9', stroke: '#333' });
+    el('text', { x: x - 14, y: y + 5, 'text-anchor': 'end', 'font-weight': 700, style: 'fill:#fff' }).textContent = t;
+  }
+  const adcTxt = el('text', { x: 120, y: 222, 'text-anchor': 'middle', 'font-family': 'ui-monospace,Menlo,monospace', 'font-size': 15, 'font-weight': 700, style: 'fill:#fff' });
+
+  // --- подтяжка 5V → A0 ---
+  const pullG = el('g', {});
+  el('polyline', { points: '227,130 300,130 300,140', fill: 'none', stroke: 'var(--v5)', 'stroke-width': 3 }, pullG);
+  el('rect', { x: 290, y: 140, width: 20, height: 40, rx: 3, fill: '#d8bf8f', stroke: '#7a6440', 'stroke-width': 2 }, pullG);
+  el('line', { x1: 300, y1: 180, x2: 300, y2: 190, stroke: 'var(--sig)', 'stroke-width': 3 }, pullG);
+  const pullTxt = el('text', { x: 318, y: 165, 'font-size': 13, style: 'fill:var(--muted)' }, pullG);
+
+  // --- провода ---
+  el('polyline', { points: '227,190 470,190 520,150', fill: 'none', stroke: 'var(--sig)', 'stroke-width': 4, 'stroke-linejoin': 'round' });
+  el('polyline', { points: '227,250 470,250 520,210', fill: 'none', stroke: 'var(--gnd)', 'stroke-width': 4, 'stroke-linejoin': 'round' });
+  // голые концы
+  const tipA = el('line', { x1: 520, y1: 150, x2: 560, y2: 118, stroke: '#c98a3a', 'stroke-width': 4, 'stroke-linecap': 'round' });
+  const tipG = el('line', { x1: 520, y1: 210, x2: 560, y2: 178, stroke: '#c98a3a', 'stroke-width': 4, 'stroke-linecap': 'round' });
+
+  // --- пальцы ---
+  const fingerG = el('g', {});
+  const f1 = el('g', {}, fingerG), f2 = el('g', {}, fingerG);
+  for (const f of [f1, f2]) {
+    el('rect', { x: 0, y: -16, width: 150, height: 32, rx: 16, fill: '#f1c7a5', stroke: '#b98a68', 'stroke-width': 2 }, f);
+    el('ellipse', { cx: 18, cy: -2, rx: 9, ry: 7, fill: '#f8dcc6', stroke: '#c9a084' }, f);
+  }
+  const wet = [el('circle', { r: 4, fill: '#6fb7ff', opacity: 0 }, fingerG), el('circle', { r: 4, fill: '#6fb7ff', opacity: 0 }, fingerG)];
+  const fingerTxt = el('text', { x: 620, y: 300, 'text-anchor': 'middle', 'font-size': 13, style: 'fill:var(--muted)' }, fingerG);
+  fingerTxt.textContent = 'пальцы одной или двух рук';
+
+  // --- яблоко ---
+  const appleG = el('g', {});
+  el('path', { d: 'M640 95 C 590 60, 520 90, 525 160 C 530 235, 590 270, 640 255 C 690 270, 750 235, 755 160 C 760 90, 690 60, 640 95 Z', fill: '#d62f2f', stroke: '#8d1b1b', 'stroke-width': 3 }, appleG);
+  el('path', { d: 'M640 95 C 642 75, 648 62, 656 52', fill: 'none', stroke: '#5a3a1a', 'stroke-width': 5, 'stroke-linecap': 'round' }, appleG);
+  el('path', { d: 'M652 70 C 675 52, 700 58, 708 66 C 690 80, 668 80, 652 70 Z', fill: '#3f9b3f' }, appleG);
+  el('ellipse', { cx: 585, cy: 130, rx: 16, ry: 28, fill: '#fff', opacity: .18 }, appleG);
+  const inA = el('line', { stroke: '#c98a3a', 'stroke-width': 4, 'stroke-linecap': 'round' }, appleG);
+  const inG = el('line', { stroke: '#c98a3a', 'stroke-width': 4, 'stroke-linecap': 'round' }, appleG);
+
+  // ток через касание
+  const flow = el('path', { fill: 'none', stroke: 'var(--flow)', 'stroke-width': 3, 'stroke-dasharray': '3 9', class: 'flowAnim' });
+  const st = document.createElement('style');
+  st.textContent = '.flowAnim{animation:fl .6s linear infinite}@keyframes fl{to{stroke-dashoffset:-12}}@media (prefers-reduced-motion: reduce){.flowAnim{animation-duration:3s}}';
+  document.head.appendChild(st);
+
+  const fmtR = r => !isFinite(r) ? 'нет контакта' : r >= 1e6 ? (r / 1e6).toFixed(1) + ' МОм' : Math.round(r / 1e3) + ' кОм';
+
+  // сопротивление касания по положению ползунка
+  function contactR(k) {
+    if (k < 0.04) return Infinity;
+    const u = (k - 0.04) / 0.96;
+    return mode === 'finger'
+      ? 3e6 * Math.pow(40e3 / 3e6, u)      // 3 МОм (едва коснулся сухим) … 40 кОм (крепко, влажно)
+      : 600e3 * Math.pow(25e3 / 600e3, u); // 600 кОм (едва воткнул) … 25 кОм (глубоко, близко)
+  }
+
+  // модель пина: делитель + шум; без подтяжки пин «плавает»
+  let floatV = 2.5, hist = [];
+  function sample() {
+    const k = press.value / 1000, R = contactR(k), Rp = +pull.value;
+    let V;
+    if (Rp > 0) {
+      V = isFinite(R) ? 5 * R / (R + Rp) : 5;
+      const noise = isFinite(R) ? 0.02 + 0.06 * Math.min(1, R / 1e6) : 0.004;   // контакт кожи «шуршит»
+      V += (Math.random() - 0.5) * noise * 2;
+    } else {
+      // висящий пин: ловит наводки и дрейфует; касание тянет к GND
+      floatV += (Math.random() - 0.5) * 0.5 + 0.35 * Math.sin(Date.now() / 160);
+      floatV = Math.max(0.3, Math.min(4.7, floatV));
+      const pullDown = isFinite(R) ? 1 / (1 + R / 300e3) : 0;
+      V = floatV * (1 - pullDown) + (Math.random() - 0.5) * 0.3;
+    }
+    V = Math.max(0, Math.min(5, V));
+    return { R, V, adc: Math.min(1023, Math.round(V / 5 * 1023)) };
+  }
+
+  function drawScene(k) {
+    const finger = mode === 'finger';
+    fingerG.style.display = finger ? '' : 'none';
+    appleG.style.display = finger ? 'none' : '';
+    tipA.style.display = tipG.style.display = finger ? '' : 'none';
+    pullG.style.display = +pull.value ? '' : 'none';
+    const Rp = +pull.value;
+    pullTxt.textContent = Rp >= 1e6 ? '1 МОм' : Rp >= 1e5 ? '100 кОм' : 'встроенная ~35 кОм';
+    const touching = k >= 0.04;
+    if (finger) {
+      // пальцы опускаются на голые концы
+      const gap = 60 * (1 - Math.min(1, k * 6));
+      f1.setAttribute('transform', `translate(${548} ${102 - gap})`);
+      f2.setAttribute('transform', `translate(${548} ${162 + gap * 0.2 - gap})`);
+      wet.forEach((w, i) => { w.setAttribute('cx', 556); w.setAttribute('cy', i ? 182 : 122); w.setAttribute('opacity', touching ? (k * .9).toFixed(2) : 0); });
+      flow.setAttribute('d', 'M560 118 C 600 130, 600 166, 560 178');
+    } else {
+      // провода входят в яблоко тем глубже, чем дальше ползунок
+      const d = touching ? 18 + 50 * k : 0;
+      inA.setAttribute('x1', 520); inA.setAttribute('y1', 150); inA.setAttribute('x2', 545 + d); inA.setAttribute('y2', 150 - d * 0.15);
+      inG.setAttribute('x1', 520); inG.setAttribute('y1', 210); inG.setAttribute('x2', 545 + d); inG.setAttribute('y2', 210 + d * 0.1);
+      flow.setAttribute('d', `M${545 + d} ${150 - d * 0.15} C ${580 + d} 165, ${580 + d} 195, ${545 + d} ${210 + d * 0.1}`);
+    }
+    flow.style.display = touching && +pull.value ? '' : 'none';
+  }
+
+  const cv = $('plot'), cx = cv.getContext('2d');
+  function drawPlot() {
+    const W = cv.width, H = cv.height;
+    cx.fillStyle = '#101418'; cx.fillRect(0, 0, W, H);
+    cx.strokeStyle = '#26323c'; cx.lineWidth = 1; cx.font = '18px sans-serif'; cx.fillStyle = '#7d8a96';
+    for (const v of [0, 512, 1023]) { const y = H - 12 - v / 1023 * (H - 50); cx.beginPath(); cx.moveTo(0, y); cx.lineTo(W, y); cx.stroke(); cx.fillText(v, 8, y - 4); }
+    cx.fillText('analogRead(A0) за последние 3 секунды', W - 360, 24);
+    cx.strokeStyle = '#ffb020'; cx.lineWidth = 2.5; cx.beginPath();
+    hist.forEach((v, i) => { const x = i / 179 * W, y = H - 12 - v / 1023 * (H - 50); i ? cx.lineTo(x, y) : cx.moveTo(x, y); });
+    cx.stroke();
+  }
+
+  function hintText(s) {
+    if (!+pull.value) return 'Без подтяжки пин «висит в воздухе»: ловит наводки от сети и рук, число скачет как попало. Касание немного тянет его вниз, но надёжно отличить его от шума нельзя.';
+    if (!isFinite(s.R)) return 'Никто не трогает: пин подтянут к +5 В, analogRead ≈ 1023.';
+    if (+pull.value < 1e5 && s.R > 5e5) return 'Встроенная подтяжка слишком «сильная» для лёгкого касания: число почти не изменилось. Прижмите сильнее или поставьте внешний резистор 1 МОм.';
+    return 'Касание образует делитель: U = 5 В × Rкасания / (Rкасания + Rподтяжки). Чем плотнее и влажнее касание, тем ниже число.';
+  }
+
+  let last = 0;
+  function tick(now) {
+    if (now - last > 16) {
+      last = now;
+      const k = press.value / 1000, s = sample();
+      hist.push(s.adc); if (hist.length > 180) hist.shift();
+      drawScene(k);
+      $('oR').textContent = fmtR(s.R);
+      $('oV').textContent = s.V.toFixed(2) + ' В';
+      $('oA').textContent = s.adc;
+      $('oT').textContent = +pull.value ? 1023 - s.adc : '—';
+      adcTxt.textContent = 'analogRead = ' + s.adc;
+      $('hint').textContent = hintText(s);
+      drawPlot();
+    }
+    requestAnimationFrame(tick);
+  }
+
+  document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
+    mode = b.dataset.mode;
+    document.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x === b));
+    $('sLo').textContent = mode === 'finger' ? 'не касаюсь' : 'провода снаружи';
+    $('sHi').textContent = mode === 'finger' ? 'крепко, влажными пальцами' : 'глубоко и близко друг к другу';
+  }));
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

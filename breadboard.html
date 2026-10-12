@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Макетная плата</title>
+<style>
+:root{
+  --bg:#f6f4ef; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#d9d5cc;
+  --v5:#d43b2f; --gnd:#2f5fd4; --sig:#e08a00; --flow:#ffcc00; --metal:#b9b3a6;
+  --board:#efeadf; --hole:#3a3a3a; --accent:#0a7d5a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416; --card:#1e1e22; --ink:#ececf0; --muted:#9a9aa3; --line:#34343a;
+    --board:#2a2925; --hole:#0c0c0c; --metal:#8f8a7e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416; --card:#1e1e22; --ink:#ececf0; --muted:#9a9aa3; --line:#34343a;
+  --board:#2a2925; --hole:#0c0c0c; --metal:#8f8a7e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:30px;margin:8px 0 4px}
+h2{font-size:22px;margin:0 0 6px}
+.lead{color:var(--muted);margin:0 0 24px}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:0 0 24px}
+.num{display:inline-block;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);text-align:center;line-height:28px;font-weight:700;margin-right:8px;font-size:15px}
+p{margin:6px 0}
+.muted{color:var(--muted)}
+svg{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
+svg text{fill:var(--ink)}
+.row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:12px 0}
+input[type=range]{flex:1;min-width:200px;accent-color:var(--sig)}
+button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--ink)}
+label.chk{display:flex;gap:6px;align-items:center;cursor:pointer}
+.big{font:700 22px ui-monospace,Menlo,monospace}
+code{font:14px ui-monospace,Menlo,monospace;background:color-mix(in srgb,var(--ink) 8%,transparent);padding:1px 5px;border-radius:4px}
+.status{padding:8px 12px;border-radius:8px;font-weight:600}
+.status.off{background:color-mix(in srgb,var(--gnd) 14%,transparent)}
+.status.on{background:color-mix(in srgb,var(--flow) 30%,transparent)}
+ul{margin:6px 0;padding-left:22px}
+.flow{fill:none;stroke:var(--flow);stroke-width:4;stroke-dasharray:4 12;stroke-linecap:round;animation:flow .6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-16}}
+@media (prefers-reduced-motion: reduce){.flow{animation-duration:3s}}
+.hole{cursor:crosshair}
+.wire{cursor:pointer}
+.ghost{cursor:pointer}
+.src a{color:var(--muted)}
+.potwrap{display:flex;gap:12px;align-items:center}
+.potwrap #potPic{flex:0 0 200px;width:200px}
+.potwrap #potSvg{flex:1;min-width:0}
+@media (max-width:640px){.potwrap{flex-direction:column}.potwrap #potPic{width:220px;flex-basis:auto}}
+nav.top{display:flex;justify-content:space-between;gap:12px;font-size:14px;margin-bottom:8px}
+nav.top a,nav.pager a{color:var(--muted);text-decoration:none}
+nav.top a:hover,nav.pager a:hover{color:var(--ink)}
+nav.pager{display:flex;justify-content:space-between;gap:12px;margin-top:8px;font-size:15px}
+nav.pager a{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--card)}
+</style>
+</head>
+<body>
+<main>
+<nav class="top"><a href="./">← Все разделы</a><span class="muted">Синтезатор на Arduino</span></nav>
+<h1>Макетная плата</h1>
+<p class="lead">Как устроена плата, на которой собирается вся схема. Всё можно двигать мышкой.</p>
+
+<!-- ============ 2. МАКЕТКА ============ -->
+<section id="bb">
+  <h2>Как устроена макетная плата</h2>
+  <ul>
+    <li>Под каждым столбцом из 5 отверстий (<b>a–e</b> или <b>f–j</b>) лежит одна металлическая пластина: эти 5 отверстий соединены.</li>
+    <li>Канавка посередине разделяет верхнюю и нижнюю половины: <b>e9</b> и <b>f9</b> не соединены.</li>
+    <li>Шины <b style="color:var(--v5)">+</b> и <b style="color:var(--gnd)">−</b> по краям идут вдоль всей платы. Верхние и нижние шины между собой не соединены, а на длинных платах шина бывает разрезана посередине.</li>
+  </ul>
+  <p class="muted">Наведите мышь на любое отверстие — подсветятся все, что с ним соединены. Щёлкните по проводу, чтобы вынуть или воткнуть его.</p>
+
+  <div class="row">
+    <label class="chk"><input type="checkbox" id="showStrips" checked> показать пластины внутри</label>
+    <button id="allIn">воткнуть все провода</button>
+    <button id="allOut">вынуть все</button>
+  </div>
+
+  <svg id="bbSvg" viewBox="0 0 760 420" aria-label="Макетная плата со светодиодом и резистором"></svg>
+
+  <p id="bbStatus" class="status off"></p>
+  <p class="muted">Цепь: Arduino 5V → шина + → резистор 220 Ом → светодиод → шина − → Arduino GND. Ток ≈ (5 − 2) В / 220 Ом ≈ 14 мА. Пунктир показывает направление тока от + к −. Резистор и светодиод стоят ногами в разных столбцах — иначе пластина замкнула бы их накоротко.</p>
+  <p class="src muted">Похожие объяснения: <a href="https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard/anatomy-of-a-breadboard">SparkFun — Anatomy of a breadboard</a>, <a href="https://www.luisllamas.es/en/breadboard-simulator/">Luis Llamas — breadboard simulator</a>.</p>
+</section>
+
+<nav class="pager"><span></span><a href="potentiometer.html">Потенциометр →</a></nav>
+</main>
+
+<script>
+/* ===================== 2. Макетка ===================== */
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('bbSvg');
+  const COLS = 24, X0 = 190, DX = 21;
+  const ROWS = 'abcdefghij';
+  const Y = { tp: 36, tm: 58, a: 100, b: 120, c: 140, d: 160, e: 180, f: 230, g: 250, h: 270, i: 290, j: 310, bp: 352, bm: 374 };
+  const X = c => X0 + (c - 1) * DX;
+  const railCol = c => c % 6 !== 0;           // шины — группами по 5 отверстий
+  const el = (tag, attrs, parent = svg) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    parent.appendChild(e); return e;
+  };
+
+  // --- группы соединённых отверстий (то, что внутри) ---
+  const groups = {};   // id -> {holes:[[x,y]], strip:element}
+  const holeGroup = {};
+  function addHole(key, gid, x, y) {
+    (groups[gid] ||= { holes: [] }).holes.push([x, y]);
+    holeGroup[key] = gid;
+  }
+  for (let c = 1; c <= COLS; c++) {
+    for (const r of 'abcde') addHole(r + c, 'T' + c, X(c), Y[r]);
+    for (const r of 'fghij') addHole(r + c, 'B' + c, X(c), Y[r]);
+    if (railCol(c)) {
+      addHole('tp' + c, 'TP', X(c), Y.tp); addHole('tm' + c, 'TM', X(c), Y.tm);
+      addHole('bp' + c, 'BP', X(c), Y.bp); addHole('bm' + c, 'BM', X(c), Y.bm);
+    }
+  }
+  const groupName = g => ({ TP: 'верхняя шина +', TM: 'верхняя шина −', BP: 'нижняя шина +', BM: 'нижняя шина −' }[g]
+    || (g[0] === 'T' ? `столбец ${g.slice(1)}, ряды a–e` : `столбец ${g.slice(1)}, ряды f–j`));
+
+  // --- плата ---
+  el('rect', { x: 165, y: 14, width: 530, height: 384, rx: 10, fill: 'var(--board)', stroke: 'var(--line)' });
+  el('rect', { x: 165, y: 196, width: 530, height: 18, fill: 'color-mix(in srgb,var(--ink) 10%,var(--board))' });
+  el('line', { x1: 180, y1: 25, x2: 680, y2: 25, stroke: 'var(--v5)', 'stroke-width': 2 });
+  el('line', { x1: 180, y1: 69, x2: 680, y2: 69, stroke: 'var(--gnd)', 'stroke-width': 2 });
+  el('line', { x1: 180, y1: 341, x2: 680, y2: 341, stroke: 'var(--v5)', 'stroke-width': 2 });
+  el('line', { x1: 180, y1: 385, x2: 680, y2: 385, stroke: 'var(--gnd)', 'stroke-width': 2 });
+  for (const [t, y, c] of [['+', Y.tp, 'var(--v5)'], ['−', Y.tm, 'var(--gnd)'], ['+', Y.bp, 'var(--v5)'], ['−', Y.bm, 'var(--gnd)']])
+    el('text', { x: 686, y: y + 5, 'text-anchor': 'middle', 'font-weight': 700, style: `fill:${c}` }).textContent = t;
+  for (const r of ROWS) el('text', { x: 176, y: Y[r] + 4, 'text-anchor': 'middle', 'font-size': 11, style: 'fill:var(--muted)' }).textContent = r;
+  for (let c = 1; c <= COLS; c++) if (c === 1 || c % 5 === 0)
+    el('text', { x: X(c), y: 92, 'text-anchor': 'middle', 'font-size': 10, style: 'fill:var(--muted)' }).textContent = c;
+
+  // --- металлические пластины (видны через «прозрачную» плату) ---
+  const stripLayer = el('g', {});
+  for (const gid in groups) {
+    const h = groups[gid].holes;
+    const xs = h.map(p => p[0]), ys = h.map(p => p[1]);
+    const x1 = Math.min(...xs) - 6, x2 = Math.max(...xs) + 6, y1 = Math.min(...ys) - 6, y2 = Math.max(...ys) + 6;
+    groups[gid].strip = el('rect', { x: x1, y: y1, width: x2 - x1, height: y2 - y1, rx: 5, fill: 'var(--metal)', opacity: .55 }, stripLayer);
+  }
+  const holeLayer = el('g', {});
+  for (const key in holeGroup) {
+    const gid = holeGroup[key];
+    const m = key.match(/^(tp|tm|bp|bm|[a-j])(\d+)$/);
+    const x = X(+m[2]), y = Y[m[1]];
+    const h = el('rect', { x: x - 4, y: y - 4, width: 8, height: 8, rx: 1.5, fill: 'var(--hole)', class: 'hole' }, holeLayer);
+    h.dataset.g = gid; h.dataset.k = key;
+  }
+  const hoverLabel = el('text', { x: 430, y: 410, 'text-anchor': 'middle', 'font-size': 13, style: 'fill:var(--muted)' });
+  holeLayer.addEventListener('pointerover', e => {
+    const g = e.target.dataset?.g; if (!g) return;
+    groups[g].strip.setAttribute('fill', 'var(--sig)'); groups[g].strip.setAttribute('opacity', .9);
+    hoverLabel.textContent = `${e.target.dataset.k}: соединено — ${groupName(g)}`;
+  });
+  holeLayer.addEventListener('pointerout', e => {
+    if (!e.target.dataset?.g) return;
+    paintStrips(); hoverLabel.textContent = '';
+  });
+
+  // --- Arduino ---
+  el('rect', { x: 14, y: 90, width: 112, height: 240, rx: 8, fill: '#1f5fa8' });
+  el('text', { x: 70, y: 200, 'text-anchor': 'middle', 'font-weight': 700, style: 'fill:#fff' }).textContent = 'Arduino';
+  el('text', { x: 70, y: 218, 'text-anchor': 'middle', 'font-weight': 700, style: 'fill:#fff' }).textContent = 'Nano';
+  const PIN5 = [126, 120], PING = [126, 300];
+  for (const [p, t] of [[PIN5, '5V'], [PING, 'GND']]) {
+    el('rect', { x: p[0] - 8, y: p[1] - 7, width: 14, height: 14, fill: '#e9e9e9', stroke: '#333' });
+    el('text', { x: p[0] - 14, y: p[1] + 5, 'text-anchor': 'end', 'font-weight': 700, 'font-size': 13, style: 'fill:#fff' }).textContent = t;
+  }
+
+  // --- детали: резистор c5–c9, светодиод e9 (анод) – f9 (катод) ---
+  const partLayer = el('g', {});
+  el('line', { x1: X(5), y1: Y.c, x2: X(9), y2: Y.c, stroke: '#999', 'stroke-width': 2 }, partLayer);
+  el('rect', { x: X(6) - 4, y: Y.c - 7, width: 50, height: 14, rx: 6, fill: '#d8bf8f', stroke: '#7a6440' }, partLayer);
+  for (const [dx, c] of [[8, '#d22'], [16, '#d22'], [24, '#7a3d12'], [38, '#c9a227']])
+    el('rect', { x: X(6) - 4 + dx, y: Y.c - 7, width: 4, height: 14, fill: c }, partLayer);
+  el('text', { x: X(7), y: Y.c - 12, 'text-anchor': 'middle', 'font-size': 11, style: 'fill:var(--muted)' }).textContent = '220 Ом';
+  el('line', { x1: X(9), y1: Y.e, x2: X(9), y2: Y.f, stroke: '#999', 'stroke-width': 2 }, partLayer);
+  const ledGlow = el('circle', { cx: X(9), cy: 205, r: 22, fill: '#ff3b2f', opacity: 0, style: 'filter:blur(6px)' }, partLayer);
+  const led = el('circle', { cx: X(9), cy: 205, r: 9, fill: '#7a1c16', stroke: '#400' }, partLayer);
+  el('text', { x: X(9) + 16, y: 209, 'font-size': 11, style: 'fill:var(--muted)' }).textContent = 'светодиод';
+
+  // --- провода ---
+  const wires = [
+    { id: 'W1', name: '5V → шина +', color: '#d43b2f', pts: [PIN5, [150, 120], [150, Y.tp], [X(2), Y.tp]], on: false },
+    { id: 'W2', name: 'шина + → a5', color: '#e08a00', pts: [[X(5), Y.tp], [X(5) - 6, 80], [X(5), Y.a]], on: false },
+    { id: 'W3', name: 'j9 → шина −', color: '#2a9d5c', pts: [[X(9), Y.j], [X(10) - 6, 340], [X(11), Y.bm]], on: false },
+    { id: 'W4', name: 'шина − → GND', color: '#333', pts: [[X(2), Y.bm], [150, Y.bm], [150, 300], PING], on: false },
+  ];
+  const wireLayer = el('g', {});
+  const pts = a => a.map(p => p.join(',')).join(' ');
+  for (const w of wires) {
+    const g = el('g', { class: 'wire' }, wireLayer);
+    w.ghost = el('polyline', { points: pts(w.pts), fill: 'none', stroke: w.color, 'stroke-width': 4, 'stroke-dasharray': '4 6', opacity: .8, 'stroke-linecap': 'round' }, g);
+    w.body = el('polyline', { points: pts(w.pts), fill: 'none', stroke: w.color, 'stroke-width': 6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+    w.ends = [w.pts[0], w.pts.at(-1)].map(p => el('circle', { cx: p[0], cy: p[1], r: 4.5, fill: w.color, stroke: '#fff', 'stroke-width': 1.5 }, g));
+    el('polyline', { points: pts(w.pts), fill: 'none', stroke: 'transparent', 'stroke-width': 18 }, g);
+    const t = el('title', {}, g); t.textContent = 'Провод ' + w.name + ' — щёлкните';
+    g.addEventListener('click', () => { w.on = !w.on; update(); });
+  }
+
+  // --- путь тока ---
+  const flowPath = [
+    PIN5, [150, 120], [150, Y.tp], [X(2), Y.tp],      // W1
+    [X(5), Y.tp],                                       // по шине +
+    [X(5) - 6, 80], [X(5), Y.a],                        // W2
+    [X(5), Y.c],                                        // по столбцу 5
+    [X(9), Y.c],                                        // резистор
+    [X(9), Y.e],                                        // по столбцу 9 (верх)
+    [X(9), Y.f],                                        // светодиод
+    [X(9), Y.j],                                        // по столбцу 9 (низ)
+    [X(10) - 6, 340], [X(11), Y.bm],                    // W3
+    [X(2), Y.bm],                                       // по шине −
+    [150, Y.bm], [150, 300], PING                       // W4
+  ];
+  const flow = el('polyline', { points: pts(flowPath), class: 'flow' });
+  const onPath = ['TP', 'T5', 'T9', 'B9', 'BM'];
+
+  const showStrips = document.getElementById('showStrips');
+  function paintStrips() {
+    const live = wires.every(w => w.on);
+    for (const gid in groups) {
+      const s = groups[gid].strip;
+      const hot = live && onPath.includes(gid);
+      s.setAttribute('fill', hot ? 'var(--flow)' : 'var(--metal)');
+      s.setAttribute('opacity', showStrips.checked || hot ? (hot ? .8 : .55) : 0);
+    }
+  }
+  function update() {
+    for (const w of wires) {
+      w.body.style.display = w.on ? '' : 'none';
+      w.ends.forEach(e => e.style.display = w.on ? '' : 'none');
+      w.ghost.style.display = w.on ? 'none' : '';
+    }
+    const live = wires.every(w => w.on);
+    flow.style.display = live ? '' : 'none';
+    led.setAttribute('fill', live ? '#ff4a3a' : '#7a1c16');
+    ledGlow.setAttribute('opacity', live ? .8 : 0);
+    paintStrips();
+    const st = document.getElementById('bbStatus');
+    const missing = wires.filter(w => !w.on).map(w => w.name);
+    st.className = 'status ' + (live ? 'on' : 'off');
+    st.textContent = live
+      ? 'Цепь замкнута — ток идёт, светодиод горит.'
+      : 'Ток не идёт: цепь разорвана. Не хватает провода: ' + missing.join(', ') + '. Пунктир — место для провода, щёлкните по нему.';
+  }
+  showStrips.addEventListener('change', paintStrips);
+  document.getElementById('allIn').onclick = () => { wires.forEach(w => w.on = true); update(); };
+  document.getElementById('allOut').onclick = () => { wires.forEach(w => w.on = false); update(); };
+  wires[0].on = wires[1].on = wires[3].on = true;   // для начала не хватает одного провода
+  if (location.hash === '#on') wires[2].on = true;
+  update();
+})();
+</script>
+</body>
+</html>
