@@ -86,8 +86,10 @@ pre{font:14px/1.45 ui-monospace,Menlo,monospace;background:color-mix(in srgb,var
       <radialGradient id="sunG"><stop offset="0" stop-color="#fff6b0"/><stop offset=".6" stop-color="#ffd23f"/><stop offset="1" stop-color="#ffb000"/></radialGradient>
     </defs>
     <!-- лучи солнца -->
+    <g id="sun">
     <g id="rays" stroke="#ffc400" stroke-width="5" stroke-linecap="round"></g>
     <circle cx="110" cy="150" r="48" fill="url(#sunG)"/>
+    </g>
     <text x="110" y="232" text-anchor="middle" font-size="14" font-weight="700" style="fill:#b37a00">солнце</text>
     <!-- коробка с окошком; тёмная заливка тем прозрачнее, чем больше света внутри -->
     <rect x="440" y="70" width="294" height="215" fill="#efe3cc"/>
@@ -126,11 +128,12 @@ pre{font:14px/1.45 ui-monospace,Menlo,monospace;background:color-mix(in srgb,var
     <input id="shade" type="range" min="0" max="1000" value="0" aria-label="Положение ширмы">
     <span>окошко закрыто</span>
   </div>
-  <p class="muted">Закрытое окошко — это настоящая темнота при любом свете снаружи: остаётся только темновое сопротивление, 1 МОм, <code>analogRead</code> ≈ 10. Ползунок ниже — сколько света снаружи кроме солнца (комната, небо); он важен, только пока окошко открыто.</p>
+  <p class="muted">Закрытое окошко — это настоящая темнота при любом свете снаружи: остаётся только темновое сопротивление, 1 МОм, <code>analogRead</code> ≈ 10. Ползунок ниже — сколько света снаружи: от ночи до яркого солнца.</p>
   <div class="row">
-    <span>снаружи ночь</span>
-    <input id="room" type="range" min="0" max="1000" value="460" aria-label="Свет в комнате">
-    <span>светло, 1000 лк</span>
+    <span>ночь</span>
+    <input id="room" type="range" min="0" max="1000" value="1000" aria-label="Свет снаружи">
+    <span>солнце</span>
+    <span class="muted" id="outLbl" style="min-width:150px"></span>
   </div>
 
   <div class="row">
@@ -315,15 +318,19 @@ void loop() {
     else $('beamR').setAttribute('points', '');
 
     // физика: освещённость → сопротивление → делитель
-    const roomLux = 1000 * Math.pow(room.value / 1000, 3);        // свет снаружи кроме солнца: 0 … 1000 лк
-    const lux = (roomLux + 3000) * Math.pow(open, 4);              // весь свет — только через окошко; край тени мягкий
-    // GL5528 по даташиту: 15 кОм при 10 лк, γ = 0.6, темновое ≥ 1 МОм.
-    // Проводимости складываются: в темноте остаётся только темновая.
-    const R = 1 / (1 / R_DARK + (lux > 0 ? 1 / (R10 * Math.pow(lux / 10, -GAMMA)) : 0));
+    const x = room.value / 1000;
+    const outLux = x > 0 ? 0.1 * Math.pow(300000, x) : 0;         // снаружи: 0 (ночь) … 100 (комната) … 30 000 лк (солнце)
+    const lux = outLux * Math.pow(open, 4);                        // в коробку свет идёт только через окошко; край тени мягкий
+    // GL5528: 15 кОм при 10 лк, γ = 0.6; в темноте — 1 МОм
+    const R = Math.min(R_DARK, R10 * Math.pow(lux / 10, -GAMMA));
     const V = 5 * 10000 / (R + 10000);
     const adc = Math.min(1023, Math.round(V / 5 * 1023));
     const am = Math.round(Math.max(0, adc - LIGHT_MIN) * 255 / (1023 - LIGHT_MIN));
 
+    $('sun').setAttribute('opacity', (0.15 + 0.85 * x).toFixed(2));
+    $('beamL').setAttribute('opacity', (0.45 * x).toFixed(2));
+    $('beamR').setAttribute('opacity', (0.45 * x).toFixed(2));
+    $('outLbl').textContent = 'снаружи ' + fmtLux(outLux).replace(', темнота', '');
     $('boxIn').setAttribute('opacity', (0.92 - 0.75 * Math.min(1, Math.log10(lux + 1) / 3.5)).toFixed(2));
     lastAdc = adc;
     if (darkPoint === null) { $('oLvl').textContent = '—'; $('oLvlBar').style.width = '0'; }
