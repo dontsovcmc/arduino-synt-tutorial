@@ -13,6 +13,12 @@
 | [Звуковые эффекты Mozzi](https://dontsovcmc.github.io/arduino-synt-tutorial/effects.html) | PM, LFO, тремоло, биткраш: формулы скетча, звук и осциллограмма в браузере |
 | [Анализатор звука](https://dontsovcmc.github.io/arduino-synt-tutorial/scope/) | Спектр, осциллограмма, уровень и нота с микрофонного входа ([подробнее](scope/README.md)) |
 
+## Поделки
+
+| Поделка | О чём |
+|---|---|
+| [Паровоз](https://claude.ai/artifact/Uhx9nPfddrNpPjjJHQsEvV) | Паровоз звенит колоколами: три сенсора касания, FM-синтез в Mozzi, скетч `fm_bells.ino` |
+
 ## Скетч
 
 [`sketches/sine_pm_am_crush_lfo2.ino`](sketches/sine_pm_am_crush_lfo2.ino) — синусоидальный генератор с фазовой модуляцией, тремоло, биткрашем и LFO (Arduino Nano + Mozzi 2.x, звук на D9).
