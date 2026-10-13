@@ -391,6 +391,19 @@ footer { color: var(--muted); font-size: .88rem; }
     </details>
   </section>
 
+  <section class="download" id="prompt">
+    <h2>Свой звук через Claude</h2>
+    <p>Хотите другой инструмент вместо колоколов? Скопируйте промпт и отправьте его Claude. Первые три строки описывают плату, их оставьте как есть. Последнюю перепишите под свою идею.</p>
+    <div class="row">
+      <button id="copyPrompt" type="button">Скопировать промпт</button>
+    </div>
+    <div class="status" id="promptStatus" aria-live="polite"></div>
+    <pre class="code" id="promptText" tabindex="0">Скетч Mozzi для Arduino Nano (atmega328old).
+Пины: A2–A4 — ручки, A5–A7 — сенсоры (касание тянет вниз, ~1000 → ~300), A0 — светодиод (LOW = горит), звук на D9.
+Сенсоры высокоомные: читай их медленно, через analogRead с паузой между переключениями каналов.
+Нужно: три ноты на сенсорах, ручки задают тембр, громкость и затухание.</pre>
+  </section>
+
   <footer>Звук собран из классов Mozzi: Oscil, Ead, Line, Q16n16_mtof, mozziAnalogRead.</footer>
 </div>
 
@@ -427,6 +440,18 @@ footer { color: var(--muted); font-size: .88rem; }
     }
     try {
       navigator.clipboard.writeText(text).then(function () { status.textContent = 'Код скопирован.'; }, fallback);
+    } catch (e) { fallback(); }
+  });
+  document.getElementById('copyPrompt').addEventListener('click', function () {
+    var box = document.getElementById('promptText');
+    var st = document.getElementById('promptStatus');
+    function fallback() {
+      var sel = window.getSelection(), range = document.createRange();
+      range.selectNodeContents(box); sel.removeAllRanges(); sel.addRange(range);
+      st.textContent = 'Промпт выделен — нажми Cmd+C или Ctrl+C.';
+    }
+    try {
+      navigator.clipboard.writeText(box.textContent).then(function () { st.textContent = 'Промпт скопирован.'; }, fallback);
     } catch (e) { fallback(); }
   });
 })();
