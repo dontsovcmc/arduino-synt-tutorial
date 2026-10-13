@@ -171,7 +171,7 @@ footer { color: var(--muted); font-size: .88rem; }
       <li><span class="pin">A3</span><div><div class="what">Материал <span class="kind">ручка</span></div><div class="how">Восемь положений, отношение частот модулятора к несущей: <span class="mono">1 · 2 · 3</span> — мягко и полое, как электропиано; <span class="mono">1.4 · 2.76 · 3.5</span> — колокол и колокольчики; <span class="mono">4.95 · 6.3</span> — гонг и металл.</div></div></li>
       <li><span class="pin">A4</span><div><div class="what">Глубина модуляции <span class="kind">ручка</span></div><div class="how">В нуле — чистый синус. На максимуме — резкий металлический удар.</div></div></li>
       <li><span class="pin">A0</span><div><div class="what">Светодиод <span class="kind">выход</span></div><div class="how">Второй ножкой к +5 В, поэтому горит при низком уровне. Светится, пока звенит удар.</div></div></li>
-      <li><span class="pin">D9</span><div><div class="what">Звук <span class="kind">выход</span></div><div class="how">ШИМ Mozzi, несущая около 32,8 кГц. Через делитель напряжения идёт на разъём для наушников внизу задней стенки, а с него на усилитель PAM8403 и динамик 8 Ом. Если воткнуть наушники, звук пойдёт в них.</div></div></li>
+      <li><span class="pin">D9</span><div><div class="what">Звук <span class="kind">выход</span></div><div class="how">ШИМ Mozzi, несущая около 32,8 кГц. Через резистор и конденсатор идёт на гнездо для наушников внизу задней стенки, а с него на усилитель PAM8403 и динамик 8 Ом. Если воткнуть наушники, звук пойдёт в них.</div></div></li>
       <li><span class="pin">USB</span><div><div class="what">Питание <span class="kind">вход</span></div><div class="how">Разъём USB Type-C, торчит под паровозом.</div></div></li>
     </ul>
   </section>
@@ -179,8 +179,8 @@ footer { color: var(--muted); font-size: .88rem; }
   <section>
     <h2>Электрическая схема</h2>
     <div class="scheme">
-      <svg viewBox="0 0 760 540" role="img" aria-labelledby="schTitle">
-        <title id="schTitle">Схема паровоза: три сенсора через 1 МОм на +5 В к пинам A5–A7, три крутилки на A2–A4, белый светодиод через 270 Ом на A0, звук с D9 через делитель и гнездо для наушников на усилитель PAM8403, питание от USB Type-C</title>
+      <svg viewBox="0 0 760 650" role="img" aria-labelledby="schTitle">
+        <title id="schTitle">Схема паровоза: три сенсора через 1 МОм на +5 В к пинам A5–A7, три крутилки на A2–A4, белый светодиод через 270 Ом на A0, звук с D9 через 1 кОм и 10 мкФ на гнездо для наушников, а с его переключаемого контакта на усилитель PAM8403, питание от USB Type-C</title>
 
         <!-- Arduino Nano -->
         <rect class="nano" x="30" y="230" width="700" height="80" rx="6"/>
@@ -255,21 +255,36 @@ footer { color: var(--muted); font-size: .88rem; }
           <text class="p" x="100" y="300">A0</text>
         </g>
 
-        <!-- Звук: D9 → делитель → гнездо для наушников → PAM8403 → динамик -->
+        <!-- Звук: D9 → 1 кОм → 10 мкФ → L и R гнезда; L′ → PAM8403 → динамик -->
         <g>
-          <path class="w" d="M230 310v170h30M350 480h30M500 480h30M630 480h25"/>
-          <rect class="part" x="260" y="462" width="90" height="36" rx="4"/>
-          <rect class="part" x="380" y="462" width="120" height="36" rx="4"/>
-          <rect class="part" x="530" y="462" width="100" height="36" rx="4"/>
-          <rect class="part" x="655" y="470" width="12" height="20"/>
-          <path class="part" d="M667 470l18-12v44l-18-12z"/>
-          <text class="c" x="305" y="485">делитель</text>
-          <text class="c" x="440" y="485">гнездо 3,5 мм</text>
-          <text class="c" x="580" y="485">PAM8403</text>
-          <text class="v c" x="440" y="520">сюда наушники</text>
-          <text class="v c" x="580" y="520">питание 5 В</text>
-          <text class="v c" x="672" y="520">динамик 8 Ом</text>
+          <path class="w" d="M230 310V470h30M310 470h32M342 452v36M354 452v36M354 470h31M385 470h35M385 470v50h35"/>
+          <rect class="part" x="260" y="463" width="50" height="14"/>
+          <circle class="dot" cx="385" cy="470" r="4"/>
+          <text class="v c" x="285" y="452">1 кОм</text>
+          <text class="v" x="328" y="450">+</text>
+          <text class="v c" x="348" y="508">10 мкФ</text>
           <text class="p" x="230" y="300">D9</text>
+
+          <!-- гнездо: L–L′ и R–R′ замкнуты, пока штекера нет -->
+          <rect class="part" x="420" y="440" width="180" height="170" rx="6"/>
+          <path class="w" d="M420 470h48M470 470l82 11M600 470h-50v12M420 520h48M470 520l82 11M600 520h-50v12M420 580h50M420 580h-28v12M382 592h20M386 597h12M390 602h4"/>
+          <circle class="dot" cx="470" cy="470" r="3"/>
+          <circle class="dot" cx="470" cy="520" r="3"/>
+          <text x="428" y="462">L <tspan class="v">· кончик</tspan></text>
+          <text x="428" y="512">R <tspan class="v">· кольцо</tspan></text>
+          <text x="428" y="572">GND <tspan class="v">· гильза</tspan></text>
+          <text class="e" x="592" y="462">L′</text>
+          <text class="e" x="592" y="512">R′</text>
+          <text class="c" x="510" y="430">гнездо 3,5 мм, 5 контактов</text>
+          <text class="v c" x="510" y="632">сюда наушники</text>
+
+          <path class="w" d="M600 470h25M707 470h7"/>
+          <rect class="part" x="625" y="452" width="82" height="36" rx="4"/>
+          <rect class="part" x="714" y="460" width="10" height="20"/>
+          <path class="part" d="M724 460l16-12v44l-16-12z"/>
+          <text class="c" x="666" y="475">PAM8403</text>
+          <text class="v c" x="666" y="508">питание 5 В</text>
+          <text class="v e" x="748" y="528">динамик 8 Ом</text>
         </g>
 
         <!-- Питание -->
@@ -286,6 +301,9 @@ footer { color: var(--muted); font-size: .88rem; }
       <div class="note"><b>Светодиод</b><span>Белый, через 270&nbsp;Ом от +5&nbsp;В к пину A0. Горит, когда на A0 низкий уровень.</span></div>
       <div class="note"><b>Сенсоры</b><span>Каждая медная полоска проводом идёт на свой пин, а пин через 1&nbsp;МОм на +5&nbsp;В. Палец тянет напряжение вниз.</span></div>
       <div class="note"><b>Крутилки</b><span>Крайние выводы на +5&nbsp;В и GND, средний на пин. Сейчас стоят две по 100&nbsp;кОм и одна на 1&nbsp;МОм, лучше все три по 10&nbsp;кОм: АЦП Arduino рассчитан на источник не больше 10&nbsp;кОм, с высокоомной ручкой показания плывут.</span></div>
+      <div class="note"><b>Гнездо для наушников</b><span>Пять контактов: L — кончик штекера, R — кольцо, GND — гильза и два переключаемых L′ и R′. Пока штекера нет, L замкнут с L′, и звук идёт на усилитель. Штекер отжимает пружину: усилитель отключается, звук идёт в наушники. Сигнал подаём сразу на L и R, чтобы играли оба уха.</span></div>
+      <div class="note"><b>Как найти ножки</b><span>Нумерация у разных гнёзд своя, поэтому прозвоните мультиметром. Без штекера две пары ножек звонятся между собой — это <span style="white-space:nowrap">L–L′</span> и <span style="white-space:nowrap">R–R′</span>. Вставьте штекер: пары разомкнутся, кончик штекера зазвонится с L, кольцо с R, основание с GND.</span></div>
+      <div class="note"><b>Резистор и конденсатор</b><span>1&nbsp;кОм ограничивает ток: наушники 32&nbsp;Ом прямо на D9 потянули бы больше 40&nbsp;мА, а это предел пина. Если в наушниках тихо, можно 470&nbsp;Ом. Конденсатор 10&nbsp;мкФ плюсом к Arduino не пускает в наушники постоянные 2,5&nbsp;В.</span></div>
     </div>
   </section>
 
@@ -294,7 +312,7 @@ footer { color: var(--muted); font-size: .88rem; }
     <p>Если в тишине слышен тихий плавающий свист около 1–2 кГц, это ультразвук ШИМ с выхода D9 перегружает вход усилителя. Ни сенсоры, ни ручки тут ни при чём, мы проверили каждый вход по очереди.</p>
     <div class="notes">
       <div class="note"><b>Убавить регулятор на PAM8403</b><span>Свист пропадает полностью, ноты остаются, только тише.</span></div>
-      <div class="note"><b>Поставить фильтр</b><span>D9 → 1 кОм → 33 нФ на землю перед входом усилителя, лучше два звена подряд. Тогда громкость можно поднять.</span></div>
+      <div class="note"><b>Поставить фильтр</b><span>После резистора 1 кОм поставить 33 нФ на землю, лучше два звена подряд. Тогда громкость можно поднять.</span></div>
       <div class="note"><b>Второй вход усилителя</b><span>Неиспользуемый канал PAM8403 соединить с землёй, а не оставлять в воздухе.</span></div>
     </div>
   </section>
