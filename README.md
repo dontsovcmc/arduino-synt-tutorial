@@ -17,7 +17,7 @@
 
 | Поделка | О чём |
 |---|---|
-| [Паровоз](https://claude.ai/artifact/Uhx9nPfddrNpPjjJHQsEvV) | Паровоз звенит колоколами: три сенсора касания, FM-синтез в Mozzi, скетч `fm_bells.ino` |
+| [Паровоз](https://dontsovcmc.github.io/arduino-synt-tutorial/parovoz.html) | Паровоз звенит колоколами: три сенсора касания, FM-синтез в Mozzi, скетч [`fm_bells.ino`](sketches/fm_bells.ino) |
 
 ## Скетч
 

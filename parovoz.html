@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Паровоз</title>
+<meta name="description" content="Игрушечный паровоз на Arduino Nano и Mozzi звенит колоколами: три сенсора касания, FM-синтез, скетч fm_bells.ino.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Одна колонка как паспорт локомотива: шапка-табличка, фото, разделы с латунными номерами пинов */
+:root {
+  --bg: #eef1ee;          /* светлый «пар» с зеленоватым оттенком */
+  --panel: #ffffff;
+  --fg: #18211d;          /* почти чёрный, как котёл */
+  --muted: #56645d;
+  --line: #cfd8d2;
+  --accent: #9a6a12;      /* латунь */
+  --accent-soft: #f3e6c8;
+  --loco: #1f4a3a;        /* паровозный зелёный */
+  --on-loco: #f4efe2;
+  --font-display: "Russo One", "Arial Black", system-ui, sans-serif;
+  --font-body: "Golos Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111613; --panel: #18201c; --fg: #e6ebe7; --muted: #9aa8a0; --line: #2c3832;
+    --accent: #d9a84a; --accent-soft: #3a2f1a; --loco: #1b3a2e; --on-loco: #f1ead8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111613; --panel: #18201c; --fg: #e6ebe7; --muted: #9aa8a0; --line: #2c3832;
+  --accent: #d9a84a; --accent-soft: #3a2f1a; --loco: #1b3a2e; --on-loco: #f1ead8;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--fg);
+  font: 16px/1.6 var(--font-body);
+  padding-inline: 16px; padding-block: 24px 64px;
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+nav.top { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; margin-bottom: -24px; }
+nav.top a { color: var(--muted); text-decoration: none; }
+nav.top a:hover { color: var(--fg); }
+nav.top span { color: var(--muted); }
+h1, h2 { font-family: var(--font-display); font-weight: 400; text-wrap: balance; margin: 0; }
+h2 { font-size: 1.35rem; letter-spacing: .01em; }
+p { margin: 0; max-width: 65ch; }
+section { display: flex; flex-direction: column; gap: 14px; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--font-mono); font-size: .92em; }
+
+/* Табличка */
+.plate {
+  background: var(--loco); color: var(--on-loco);
+  border-radius: 6px; padding: 28px 24px 24px;
+  display: flex; flex-direction: column; gap: 12px;
+  border: 3px double color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.plate .eyebrow { font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+.plate h1 { font-size: clamp(2.6rem, 9vw, 4.2rem); line-height: 1; letter-spacing: .03em; color: var(--accent); }
+.plate p { font-size: 1.08rem; opacity: .95; }
+.plate .specs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.plate .specs span {
+  font-family: var(--font-mono); font-size: .78rem; padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--on-loco) 35%, transparent); border-radius: 3px;
+}
+
+/* Фото */
+.photo {
+  aspect-ratio: 4 / 3; max-width: 100%;
+  border: 2px dashed var(--line); border-radius: 6px;
+  display: grid; place-items: center; text-align: center;
+  color: var(--muted); background: var(--panel); padding: 16px;
+}
+.photo strong { display: block; font-family: var(--font-display); font-weight: 400; color: var(--fg); font-size: 1.1rem; }
+
+/* Пины */
+.pins { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.pins li {
+  display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); gap: 4px 16px;
+  padding: 14px 0; border-bottom: 1px solid var(--line); align-items: start;
+}
+.pin {
+  font-family: var(--font-mono); font-weight: 600; font-size: .95rem; text-align: center;
+  background: var(--accent-soft); color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 3px; padding: 2px 0;
+}
+.pins .what { font-weight: 600; }
+.pins .how { color: var(--muted); font-size: .95rem; }
+.kind { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+.note { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.note b { font-weight: 600; }
+.note span { color: var(--muted); font-size: .95rem; }
+
+ol.steps { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 6px; max-width: 65ch; }
+
+/* Скачать */
+.download { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button {
+  font: 600 1rem var(--font-body); cursor: pointer;
+  padding: 10px 18px; border-radius: 4px; border: 1px solid var(--accent);
+  background: var(--accent); color: var(--panel);
+}
+button.ghost { background: transparent; color: var(--accent); }
+button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px; }
+.status { color: var(--muted); font-size: .92rem; min-height: 1.4em; }
+details summary { cursor: pointer; font-weight: 600; }
+pre.code {
+  margin: 12px 0 0; max-height: 480px; overflow: auto;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 4px;
+  padding: 14px; font: 12.5px/1.5 var(--font-mono); white-space: pre; tab-size: 2;
+}
+footer { color: var(--muted); font-size: .88rem; }
+@media (prefers-reduced-motion: no-preference) { button { transition: filter .15s; } button:hover { filter: brightness(1.08); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top"><a href="./">← Все разделы</a><span>Синтезатор на Arduino</span></nav>
+
+  <header class="plate">
+    <div class="eyebrow">Музыкальная поделка · Arduino Nano · Mozzi</div>
+    <h1>Паровоз</h1>
+    <p>Игрушечный паровоз, который звенит колоколами. Коснись сенсора на корпусе — раздаётся удар, и нота сама затухает за две с половиной секунды. Три ручки меняют высоту, материал колокола и яркость удара.</p>
+    <div class="specs"><span>ATmega328P 16 МГц</span><span>FM-синтез</span><span>3 голоса</span><span>16384 отсчёта/с</span><span>ШИМ на D9</span></div>
+  </header>
+
+  <div class="photo" role="img" aria-label="Место для фотографии паровоза">
+    <div><strong>Фото скоро будет</strong>Здесь появится снимок паровоза</div>
+  </div>
+
+  <section>
+    <h2>Как он звучит</h2>
+    <p>Внутри работает FM-синтез, тот же приём, что в синтезаторах Yamaha DX7. Один синус качает фазу другого. Когда их частоты в целом отношении (1, 2, 3), звук получается гладким, как электропиано. Когда в дробном (1.4, 2.76, 6.3), появляются негармоничные обертоны, и выходит колокол, колокольчик или гонг.</p>
+    <p>Яркость удара гаснет быстрее громкости: в начале звонкий металлический «дзынь», в хвосте мягкий тон. Так ведут себя настоящие колокола.</p>
+  </section>
+
+  <section>
+    <h2>Входы и выходы</h2>
+    <ul class="pins">
+      <li><span class="pin">A5</span><div><div class="what">Сенсор «до» <span class="kind">касание</span></div><div class="how">Нота до первой октавы (MIDI 60). Палец тянет показание вниз, удар срабатывает при падении больше 200 единиц.</div></div></li>
+      <li><span class="pin">A6</span><div><div class="what">Сенсор «ми» <span class="kind">касание</span></div><div class="how">Нота ми (MIDI 64). Можно зажимать вместе с другими: три ноты звучат аккордом.</div></div></li>
+      <li><span class="pin">A7</span><div><div class="what">Сенсор «соль» <span class="kind">касание</span></div><div class="how">Нота соль (MIDI 67). Вместе с до и ми получается до-мажорное трезвучие.</div></div></li>
+      <li><span class="pin">A2</span><div><div class="what">Высота <span class="kind">ручка</span></div><div class="how">Сдвигает все ноты на ±12 полутонов, в середине — без сдвига.</div></div></li>
+      <li><span class="pin">A3</span><div><div class="what">Материал <span class="kind">ручка</span></div><div class="how">Восемь положений, отношение частот модулятора к несущей: <span class="mono">1 · 2 · 3</span> — мягко и полое, как электропиано; <span class="mono">1.4 · 2.76 · 3.5</span> — колокол и колокольчики; <span class="mono">4.95 · 6.3</span> — гонг и металл.</div></div></li>
+      <li><span class="pin">A4</span><div><div class="what">Глубина модуляции <span class="kind">ручка</span></div><div class="how">В нуле — чистый синус. На максимуме — резкий металлический удар.</div></div></li>
+      <li><span class="pin">A0</span><div><div class="what">Светодиод <span class="kind">выход</span></div><div class="how">Второй ножкой к +5 В, поэтому горит при низком уровне. Светится, пока звенит удар.</div></div></li>
+      <li><span class="pin">D9</span><div><div class="what">Звук <span class="kind">выход</span></div><div class="how">ШИМ Mozzi, несущая около 32,8 кГц. Через делитель напряжения на усилитель PAM8403 и динамик 8 Ом.</div></div></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Чтобы не свистело</h2>
+    <p>Если в тишине слышен тихий плавающий свист около 1–2 кГц, это ультразвук ШИМ с выхода D9 перегружает вход усилителя. Ни сенсоры, ни ручки тут ни при чём, мы проверили каждый вход по очереди.</p>
+    <div class="notes">
+      <div class="note"><b>Убавить регулятор на PAM8403</b><span>Свист пропадает полностью, ноты остаются, только тише.</span></div>
+      <div class="note"><b>Поставить фильтр</b><span>D9 → 1 кОм → 33 нФ на землю перед входом усилителя, лучше два звена подряд. Тогда громкость можно поднять.</span></div>
+      <div class="note"><b>Второй вход усилителя</b><span>Неиспользуемый канал PAM8403 соединить с землёй, а не оставлять в воздухе.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Как записать в плату</h2>
+    <ol class="steps">
+      <li>Установить Arduino IDE и через менеджер библиотек библиотеку <b>Mozzi</b> версии 2.</li>
+      <li>Скачать архив ниже и распаковать: внутри папка <code>fm_bells</code> с файлом <code>fm_bells.ino</code>.</li>
+      <li>Открыть <code>fm_bells.ino</code>, выбрать плату <b>Arduino Nano</b>, процессор <b>ATmega328P (Old Bootloader)</b> и порт.</li>
+      <li>Нажать «Загрузить». Если загрузка не проходит, переподключить USB или сменить кабель.</li>
+    </ol>
+  </section>
+
+  <section class="download" id="code">
+    <h2>Скетч fm_bells.ino</h2>
+    <p>Архив с папкой для Arduino IDE, 205 строк с подробными комментариями на русском. Код лежит и на GitHub: <a href="https://github.com/dontsovcmc/arduino-synt-tutorial/blob/main/sketches/fm_bells.ino"><code>sketches/fm_bells.ino</code></a>.</p>
+    <div class="row">
+      <button id="dl" type="button">Скачать fm_bells.zip</button>
+      <button id="copy" class="ghost" type="button">Скопировать код</button>
+    </div>
+    <div class="status" id="status" aria-live="polite"></div>
+    <details id="view">
+      <summary>Показать код</summary>
+      <pre class="code" id="src" tabindex="0">Загружаю…</pre>
+    </details>
+  </section>
+
+  <footer>Звук собран из классов Mozzi: Oscil, Ead, Line, Q16n16_mtof, mozziAnalogRead.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function () {
+  var src = document.getElementById('src');
+  var status = document.getElementById('status');
+  var text = '';
+  fetch('sketches/fm_bells.ino').then(function (r) { if (!r.ok) throw 0; return r.text(); })
+    .then(function (t) { text = t; src.textContent = t; })
+    .catch(function () { src.textContent = 'Не удалось загрузить код. Обнови страницу.'; });
+
+  document.getElementById('dl').addEventListener('click', async function () {
+    status.textContent = '';
+    if (!text) { status.textContent = 'Код ещё загружается.'; return; }
+    if (!window.JSZip) { status.textContent = 'Архив не собрать. Скопируй код кнопкой рядом и сохрани как fm_bells/fm_bells.ino.'; return; }
+    var zip = new JSZip();
+    zip.folder('fm_bells').file('fm_bells.ino', text);
+    var url = URL.createObjectURL(await zip.generateAsync({ type: 'blob' }));
+    var a = document.createElement('a');
+    a.href = url; a.download = 'fm_bells.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  });
+
+  document.getElementById('copy').addEventListener('click', function () {
+    if (!text) { status.textContent = 'Код ещё загружается.'; return; }
+    function fallback() {
+      document.getElementById('view').open = true;
+      var sel = window.getSelection(), range = document.createRange();
+      range.selectNodeContents(src); sel.removeAllRanges(); sel.addRange(range);
+      status.textContent = 'Код выделен — нажми Cmd+C или Ctrl+C.';
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { status.textContent = 'Код скопирован.'; }, fallback);
+    } catch (e) { fallback(); }
+  });
+})();
+</script>
+</body>
+</html>
