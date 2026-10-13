@@ -111,6 +111,24 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 .scheme .e { text-anchor: end; }
 .scheme .t { font: 15px var(--font-display); fill: var(--on-loco); text-anchor: middle; }
 
+/* Гнездо: корпус и металл одного цвета в обеих темах */
+.jack { display: flex; flex-direction: column; gap: 12px; }
+.jack figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.jack figure svg, .jack figure img { display: block; width: 100%; height: auto; }
+.jack figure img { background: #fff; border-radius: 4px; max-width: 520px; }
+.jack figcaption { color: var(--muted); font-size: .9rem; }
+.jk-top { fill: #2b2f2d; stroke: #5a605d; stroke-width: 1.5; }
+.jk-front { fill: #1a1c1b; stroke: #5a605d; stroke-width: 1.5; }
+.jk-side { fill: #222524; stroke: #5a605d; stroke-width: 1.5; }
+.jk-metal { fill: #b9bdbb; stroke: #777; stroke-width: 1.5; }
+.jk-ring { fill: none; stroke: #888; stroke-width: 1.5; }
+.jk-hole { fill: #111; }
+.jk-pin { fill: #cfd3d1; stroke: #888; }
+.jk-lead { fill: none; stroke-width: 1.5; }
+.jk-lab { font: 600 14px var(--font-body); }
+.jk-on { stroke: var(--fg); fill: var(--fg); }
+.jk-off { stroke: var(--muted); fill: var(--muted); }
+
 .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
 .note { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
 .note b { font-weight: 600; }
@@ -151,8 +169,8 @@ footer { color: var(--muted); font-size: .88rem; }
   </header>
 
   <figure class="photo">
-    <img src="img/parovoz_labels.jpg" width="1600" height="900" alt="Паровоз: три медные полоски на корпусе — ноты, три крутилки на задней стенке, внизу выход на наушники">
-    <figcaption>Полоски на корпусе — ноты, крутилки на задней стенке — ручки, внизу — выход на наушники. <a href="img/parovoz.jpg">Фото без подписей</a></figcaption>
+    <img src="img/parovoz_labels.jpg" width="1600" height="900" alt="Паровоз: три медные полоски на корпусе — ноты, три крутилки на задней стенке, внизу выход на наушники, динамик в кабине, USB Type-C в дне">
+    <figcaption>Полоски на корпусе — ноты, крутилки на задней стенке — ручки, внизу — выход на наушники. Динамик стоит в кабине, разъём питания USB Type-C — в дне. <a href="img/parovoz.jpg">Фото без подписей</a></figcaption>
   </figure>
 
   <section>
@@ -171,8 +189,8 @@ footer { color: var(--muted); font-size: .88rem; }
       <li><span class="pin">A3</span><div><div class="what">Материал <span class="kind">ручка</span></div><div class="how">Восемь положений, отношение частот модулятора к несущей: <span class="mono">1 · 2 · 3</span> — мягко и полое, как электропиано; <span class="mono">1.4 · 2.76 · 3.5</span> — колокол и колокольчики; <span class="mono">4.95 · 6.3</span> — гонг и металл.</div></div></li>
       <li><span class="pin">A4</span><div><div class="what">Глубина модуляции <span class="kind">ручка</span></div><div class="how">В нуле — чистый синус. На максимуме — резкий металлический удар.</div></div></li>
       <li><span class="pin">A0</span><div><div class="what">Светодиод <span class="kind">выход</span></div><div class="how">Второй ножкой к +5 В, поэтому горит при низком уровне. Светится, пока звенит удар.</div></div></li>
-      <li><span class="pin">D9</span><div><div class="what">Звук <span class="kind">выход</span></div><div class="how">ШИМ Mozzi, несущая около 32,8 кГц. Через резистор и конденсатор идёт на гнездо для наушников внизу задней стенки, а с него на усилитель PAM8403 и динамик 8 Ом. Если воткнуть наушники, звук пойдёт в них.</div></div></li>
-      <li><span class="pin">USB</span><div><div class="what">Питание <span class="kind">вход</span></div><div class="how">Разъём USB Type-C, торчит под паровозом.</div></div></li>
+      <li><span class="pin">D9</span><div><div class="what">Звук <span class="kind">выход</span></div><div class="how">ШИМ Mozzi, несущая около 32,8 кГц. Идёт напрямую на гнездо для наушников внизу задней стенки, а с него на усилитель PAM8403 и динамик 8 Ом в кабине. Если воткнуть наушники, звук пойдёт в них.</div></div></li>
+      <li><span class="pin">USB</span><div><div class="what">Питание <span class="kind">вход</span></div><div class="how">Разъём USB Type-C в дне паровоза.</div></div></li>
     </ul>
   </section>
 
@@ -180,7 +198,7 @@ footer { color: var(--muted); font-size: .88rem; }
     <h2>Электрическая схема</h2>
     <div class="scheme">
       <svg viewBox="0 0 760 650" role="img" aria-labelledby="schTitle">
-        <title id="schTitle">Схема паровоза: три сенсора через 1 МОм на +5 В к пинам A5–A7, три крутилки на A2–A4, белый светодиод через 270 Ом на A0, звук с D9 через 1 кОм и 10 мкФ на гнездо для наушников, а с его переключаемого контакта на усилитель PAM8403, питание от USB Type-C</title>
+        <title id="schTitle">Схема паровоза: три сенсора через 1 МОм на +5 В к пинам A5–A7, три крутилки на A2–A4, белый светодиод через 270 Ом на A0, звук с D9 на ножку 3 гнезда для наушников, а с ножки 4 на усилитель PAM8403, питание от USB Type-C</title>
 
         <!-- Arduino Nano -->
         <rect class="nano" x="30" y="230" width="700" height="80" rx="6"/>
@@ -255,27 +273,20 @@ footer { color: var(--muted); font-size: .88rem; }
           <text class="p" x="100" y="300">A0</text>
         </g>
 
-        <!-- Звук: D9 → 1 кОм → 10 мкФ → L и R гнезда; L′ → PAM8403 → динамик -->
+        <!-- Звук: D9 → ножка 3 гнезда; без штекера 3 замкнута с 4 → PAM8403 → динамик -->
         <g>
-          <path class="w" d="M230 310V470h30M310 470h32M342 452v36M354 452v36M354 470h31M385 470h35M385 470v50h35"/>
-          <rect class="part" x="260" y="463" width="50" height="14"/>
-          <circle class="dot" cx="385" cy="470" r="4"/>
-          <text class="v c" x="285" y="452">1 кОм</text>
-          <text class="v" x="328" y="450">+</text>
-          <text class="v c" x="348" y="508">10 мкФ</text>
+          <path class="w" d="M230 310V470h190"/>
           <text class="p" x="230" y="300">D9</text>
 
-          <!-- гнездо: L–L′ и R–R′ замкнуты, пока штекера нет -->
+          <!-- гнездо TKX3-3.5-05: 3–4 замкнуты, пока штекера нет -->
           <rect class="part" x="420" y="440" width="180" height="170" rx="6"/>
-          <path class="w" d="M420 470h48M470 470l82 11M600 470h-50v12M420 520h48M470 520l82 11M600 520h-50v12M420 580h50M420 580h-28v12M382 592h20M386 597h12M390 602h4"/>
+          <path class="w" d="M420 470h48M470 470l82 11M600 470h-50v12M420 580h50M420 580h-28v12M382 592h20M386 597h12M390 602h4"/>
           <circle class="dot" cx="470" cy="470" r="3"/>
-          <circle class="dot" cx="470" cy="520" r="3"/>
-          <text x="428" y="462">L <tspan class="v">· кончик</tspan></text>
-          <text x="428" y="512">R <tspan class="v">· кольцо</tspan></text>
-          <text x="428" y="572">GND <tspan class="v">· гильза</tspan></text>
-          <text class="e" x="592" y="462">L′</text>
-          <text class="e" x="592" y="512">R′</text>
-          <text class="c" x="510" y="430">гнездо 3,5 мм, 5 контактов</text>
+          <text x="428" y="462">3</text>
+          <text class="e" x="592" y="462">4</text>
+          <text class="v" x="428" y="530">2, 5 — не подключены</text>
+          <text x="428" y="572">1 <tspan class="v">· GND</tspan></text>
+          <text class="c" x="510" y="430">гнездо TKX3-3.5-05</text>
           <text class="v c" x="510" y="632">сюда наушники</text>
 
           <path class="w" d="M600 470h25M707 470h7"/>
@@ -301,9 +312,48 @@ footer { color: var(--muted); font-size: .88rem; }
       <div class="note"><b>Светодиод</b><span>Белый, через 270&nbsp;Ом от +5&nbsp;В к пину A0. Горит, когда на A0 низкий уровень.</span></div>
       <div class="note"><b>Сенсоры</b><span>Каждая медная полоска проводом идёт на свой пин, а пин через 1&nbsp;МОм на +5&nbsp;В. Палец тянет напряжение вниз.</span></div>
       <div class="note"><b>Крутилки</b><span>Крайние выводы на +5&nbsp;В и GND, средний на пин. Сейчас стоят две по 100&nbsp;кОм и одна на 1&nbsp;МОм, лучше все три по 10&nbsp;кОм: АЦП Arduino рассчитан на источник не больше 10&nbsp;кОм, с высокоомной ручкой показания плывут.</span></div>
-      <div class="note"><b>Гнездо для наушников</b><span>Пять контактов: L — кончик штекера, R — кольцо, GND — гильза и два переключаемых L′ и R′. Пока штекера нет, L замкнут с L′, и звук идёт на усилитель. Штекер отжимает пружину: усилитель отключается, звук идёт в наушники. Сигнал подаём сразу на L и R, чтобы играли оба уха.</span></div>
-      <div class="note"><b>Как найти ножки</b><span>Нумерация у разных гнёзд своя, поэтому прозвоните мультиметром. Без штекера две пары ножек звонятся между собой — это <span style="white-space:nowrap">L–L′</span> и <span style="white-space:nowrap">R–R′</span>. Вставьте штекер: пары разомкнутся, кончик штекера зазвонится с L, кольцо с R, основание с GND.</span></div>
-      <div class="note"><b>Резистор и конденсатор</b><span>1&nbsp;кОм ограничивает ток: наушники 32&nbsp;Ом прямо на D9 потянули бы больше 40&nbsp;мА, а это предел пина. Если в наушниках тихо, можно 470&nbsp;Ом. Конденсатор 10&nbsp;мкФ плюсом к Arduino не пускает в наушники постоянные 2,5&nbsp;В.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Гнездо для наушников</h2>
+    <p>Обычное гнездо mini jack 3,5 мм на плату, TKX3-3.5-05, пять ножек. Внутри пружина: пока штекера нет, ножки 3 и 4 замкнуты, и звук с D9 проходит на усилитель. Штекер отжимает пружину, усилитель отключается, звук идёт в наушники.</p>
+    <div class="jack">
+      <figure>
+        <svg viewBox="0 0 700 370" role="img" aria-label="Гнездо TKX3-3.5-05 сверху: ножка 1 у входа — GND, ножка 3 посередине — D9, ножка 4 на углу — к усилителю, ножки 2 и 5 не подключены">
+          <polygon class="jk-side" points="320,265 494,175 494,255 320,345"/>
+          <polygon class="jk-front" points="200,190 320,265 320,345 200,270"/>
+          <polygon class="jk-top" points="200,190 374,100 494,175 320,265"/>
+          <polygon class="jk-metal" points="242,239 212,255 248,320 278,304"/>
+          <polygon class="jk-metal" points="255,303 255,306 255,308 254,310 254,312 253,314 252,316 251,317 249,319 248,320 246,320 244,321 243,321 241,321 239,321 236,320 234,319 232,318 230,317 228,316 225,314 223,312 221,310 219,308 217,305 215,303 213,300 212,297 210,294 209,291 208,288 207,285 206,282 205,280 205,277 204,274 204,271 204,269 205,266 205,264 206,262 207,260 208,258 209,257 210,256 212,255 213,254 215,253 217,253 219,253 221,253 223,254 225,255 228,256 230,257 232,259 234,260 236,262 239,264 241,267 243,269 244,272 246,274 248,277 249,280 251,283 252,286 253,289 254,292 254,295 255,298 255,300"/>
+          <polygon class="jk-ring" points="248,299 248,301 248,302 248,304 247,306 247,307 246,308 245,309 244,310 243,311 242,311 241,312 239,312 238,312 236,312 235,311 233,311 231,310 230,309 228,308 227,307 225,305 223,304 222,302 220,300 219,298 218,296 217,294 216,292 215,290 214,288 213,286 212,284 212,282 211,279 211,277 211,275 211,274 211,272 212,270 212,269 213,267 214,266 215,265 216,264 217,263 218,263 219,262 220,262 222,262 223,262 225,263 227,263 228,264 230,265 231,266 233,267 235,269 236,270 238,272 239,274 241,276 242,278 243,280 244,282 245,284 246,286 247,288 247,291 248,293 248,295 248,297"/>
+          <polygon class="jk-hole" points="240,293 240,295 240,295 240,296 239,297 239,298 239,299 238,299 238,300 237,300 236,300 236,301 235,301 234,301 233,301 232,300 232,300 231,300 230,299 229,299 228,298 227,297 226,296 226,295 225,294 224,293 223,292 223,291 222,290 221,289 221,288 221,286 220,285 220,284 220,283 220,282 220,281 220,280 220,279 220,278 220,277 221,276 221,276 221,275 222,275 223,274 223,274 224,274 225,274 226,274 226,274 227,274 228,274 229,275 230,275 231,276 232,276 232,277 233,278 234,279 235,280 236,281 236,282 237,283 238,284 238,285 239,287 239,288 239,289 240,290 240,291 240,292"/>
+          <path class="jk-pin" d="M367 115V79L372 73L377 79V115Z"/>
+          <path class="jk-lead jk-on" d="M372 73L434 31"/>
+          <text class="jk-lab jk-on" x="440" y="36">4 · к усилителю PAM8403</text>
+          <path class="jk-pin" d="M285 163V127L290 121L295 127V163Z"/>
+          <path class="jk-lead jk-off" d="M290 121L165 65"/>
+          <text class="jk-lab jk-off" x="20" y="70">5 · не подключена</text>
+          <path class="jk-pin" d="M389 190V154L394 148L399 154V190Z"/>
+          <path class="jk-lead jk-on" d="M394 148L534 135"/>
+          <text class="jk-lab jk-on" x="540" y="140">3 · D9</text>
+          <path class="jk-pin" d="M427 200V164L432 158L437 164V200Z"/>
+          <path class="jk-lead jk-off" d="M432 158L524 245"/>
+          <text class="jk-lab jk-off" x="530" y="250">2 · не подключена</text>
+          <path class="jk-pin" d="M276 217V181L281 175L286 181V217Z"/>
+          <path class="jk-lead jk-on" d="M281 175L103 155"/>
+          <text class="jk-lab jk-on" x="40" y="160">1 · GND</text>
+        </svg>
+        <figcaption>Вид сверху, как на фото. Номера ножек по чертежу.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/tkx3-3.5-05.jpg" width="700" height="700" loading="lazy" alt="Чертёж гнезда TKX3-3.5-05: размеры и расположение ножек 1–5, сторона монтажа">
+        <figcaption>Чертёж TKX3-3.5-05, внизу — сторона монтажа (вид снизу, зеркально). Источник: <a href="https://deltachip.kz/p103088938-tkx3-audio-razem.html">deltachip.kz</a></figcaption>
+      </figure>
+    </div>
+    <div class="notes">
+      <div class="note"><b>Как подключено</b><span>Ножка 3 — D9, ножка 4 — вход PAM8403, ножка 1 — GND. Ножки 2 и 5 не подключены.</span></div>
+      <div class="note"><b>Если втыкать наушники</b><span>D9 идёт на гнездо напрямую. Наушники 32&nbsp;Ом потянут из пина больше 40&nbsp;мА, а это его предел. Безопаснее поставить между D9 и ножкой 3 резистор 470&nbsp;Ом – 1&nbsp;кОм и конденсатор 10&nbsp;мкФ плюсом к Arduino.</span></div>
     </div>
   </section>
 
@@ -312,7 +362,7 @@ footer { color: var(--muted); font-size: .88rem; }
     <p>Если в тишине слышен тихий плавающий свист около 1–2 кГц, это ультразвук ШИМ с выхода D9 перегружает вход усилителя. Ни сенсоры, ни ручки тут ни при чём, мы проверили каждый вход по очереди.</p>
     <div class="notes">
       <div class="note"><b>Убавить регулятор на PAM8403</b><span>Свист пропадает полностью, ноты остаются, только тише.</span></div>
-      <div class="note"><b>Поставить фильтр</b><span>После резистора 1 кОм поставить 33 нФ на землю, лучше два звена подряд. Тогда громкость можно поднять.</span></div>
+      <div class="note"><b>Поставить фильтр</b><span>D9 → 1 кОм → 33 нФ на землю перед гнездом, лучше два звена подряд. Тогда громкость можно поднять.</span></div>
       <div class="note"><b>Второй вход усилителя</b><span>Неиспользуемый канал PAM8403 соединить с землёй, а не оставлять в воздухе.</span></div>
     </div>
   </section>
