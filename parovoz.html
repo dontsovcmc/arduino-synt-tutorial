@@ -96,6 +96,21 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 .pins .how { color: var(--muted); font-size: .95rem; }
 .kind { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
 
+/* Схема */
+.scheme { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px; overflow-x: auto; }
+.scheme svg { display: block; width: 100%; min-width: 640px; height: auto; color: var(--fg); }
+.scheme .w { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.scheme .part { fill: var(--panel); stroke: currentColor; stroke-width: 2; }
+.scheme .nano { fill: var(--loco); stroke: var(--accent); stroke-width: 2; }
+.scheme .pad { fill: var(--accent); }
+.scheme .dot { fill: currentColor; }
+.scheme text { font: 13px var(--font-body); fill: var(--fg); }
+.scheme .p { font: 600 13px var(--font-mono); fill: #d9a84a; text-anchor: middle; } /* плата тёмная в обеих темах */
+.scheme .v { fill: var(--muted); }
+.scheme .c { text-anchor: middle; }
+.scheme .e { text-anchor: end; }
+.scheme .t { font: 15px var(--font-display); fill: var(--on-loco); text-anchor: middle; }
+
 .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
 .note { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
 .note b { font-weight: 600; }
@@ -159,6 +174,119 @@ footer { color: var(--muted); font-size: .88rem; }
       <li><span class="pin">D9</span><div><div class="what">Звук <span class="kind">выход</span></div><div class="how">ШИМ Mozzi, несущая около 32,8 кГц. Через делитель напряжения идёт на разъём для наушников внизу задней стенки, а с него на усилитель PAM8403 и динамик 8 Ом. Если воткнуть наушники, звук пойдёт в них.</div></div></li>
       <li><span class="pin">USB</span><div><div class="what">Питание <span class="kind">вход</span></div><div class="how">Разъём USB Type-C, торчит под паровозом.</div></div></li>
     </ul>
+  </section>
+
+  <section>
+    <h2>Электрическая схема</h2>
+    <div class="scheme">
+      <svg viewBox="0 0 760 540" role="img" aria-labelledby="schTitle">
+        <title id="schTitle">Схема паровоза: три сенсора через 1 МОм на +5 В к пинам A5–A7, три крутилки на A2–A4, белый светодиод через 270 Ом на A0, звук с D9 через делитель и гнездо для наушников на усилитель PAM8403, питание от USB Type-C</title>
+
+        <!-- Arduino Nano -->
+        <rect class="nano" x="30" y="230" width="700" height="80" rx="6"/>
+        <text class="t" x="400" y="276">Arduino Nano</text>
+
+        <!-- Сенсоры: +5 В → 1 МОм → пин, полоска на том же проводе -->
+        <g>
+          <path class="w" d="M90 40h20M100 40v30M100 120v110M100 170h-40"/>
+          <rect class="part" x="93" y="70" width="14" height="50"/>
+          <circle class="dot" cx="100" cy="170" r="4"/>
+          <rect class="pad" x="36" y="162" width="24" height="16" rx="2"/>
+          <text class="c" x="100" y="30">+5 В</text>
+          <text class="v" x="114" y="100">1 МОм</text>
+          <text class="c" x="48" y="198">до</text>
+          <text class="p" x="100" y="250">A5</text>
+        </g>
+        <g>
+          <path class="w" d="M190 40h20M200 40v30M200 120v110M200 170h-40"/>
+          <rect class="part" x="193" y="70" width="14" height="50"/>
+          <circle class="dot" cx="200" cy="170" r="4"/>
+          <rect class="pad" x="136" y="162" width="24" height="16" rx="2"/>
+          <text class="c" x="200" y="30">+5 В</text>
+          <text class="v" x="214" y="100">1 МОм</text>
+          <text class="c" x="148" y="198">ми</text>
+          <text class="p" x="200" y="250">A6</text>
+        </g>
+        <g>
+          <path class="w" d="M290 40h20M300 40v30M300 120v110M300 170h-40"/>
+          <rect class="part" x="293" y="70" width="14" height="50"/>
+          <circle class="dot" cx="300" cy="170" r="4"/>
+          <rect class="pad" x="236" y="162" width="24" height="16" rx="2"/>
+          <text class="c" x="300" y="30">+5 В</text>
+          <text class="v" x="314" y="100">1 МОм</text>
+          <text class="c" x="248" y="198">соль</text>
+          <text class="p" x="300" y="250">A7</text>
+        </g>
+
+        <!-- Крутилки: крайние выводы на +5 В и GND, движок на пин -->
+        <g>
+          <path class="w" d="M430 40h20M440 40v30M440 140v30M430 170h20M434 175h12M438 180h4M470 105h-20M470 105v125M456 99l-6 6 6 6"/>
+          <rect class="part" x="433" y="70" width="14" height="70"/>
+          <text class="c" x="440" y="30">+5 В</text>
+          <text class="v e" x="426" y="100">10 кОм</text>
+          <text class="v e" x="426" y="118">высота</text>
+          <text class="p" x="470" y="250">A2</text>
+        </g>
+        <g>
+          <path class="w" d="M540 40h20M550 40v30M550 140v30M540 170h20M544 175h12M548 180h4M580 105h-20M580 105v125M566 99l-6 6 6 6"/>
+          <rect class="part" x="543" y="70" width="14" height="70"/>
+          <text class="c" x="550" y="30">+5 В</text>
+          <text class="v e" x="536" y="100">10 кОм</text>
+          <text class="v e" x="536" y="118">материал</text>
+          <text class="p" x="580" y="250">A3</text>
+        </g>
+        <g>
+          <path class="w" d="M650 40h20M660 40v30M660 140v30M650 170h20M654 175h12M658 180h4M690 105h-20M690 105v125M676 99l-6 6 6 6"/>
+          <rect class="part" x="653" y="70" width="14" height="70"/>
+          <text class="c" x="660" y="30">+5 В</text>
+          <text class="v e" x="646" y="100">10 кОм</text>
+          <text class="v e" x="646" y="118">глубина</text>
+          <text class="p" x="690" y="250">A4</text>
+        </g>
+
+        <!-- Светодиод: +5 В → 270 Ом → белый светодиод → A0 -->
+        <g>
+          <path class="w" d="M100 310v35M88 345h24M100 370v25M100 440v30M90 470h20M114 352l10-8M118 360l10-8"/>
+          <path class="part" d="M100 345l-12 25h24z"/>
+          <rect class="part" x="93" y="395" width="14" height="45"/>
+          <text class="c" x="100" y="490">+5 В</text>
+          <text class="v" x="132" y="366">белый</text>
+          <text class="v" x="116" y="422">270 Ом</text>
+          <text class="p" x="100" y="300">A0</text>
+        </g>
+
+        <!-- Звук: D9 → делитель → гнездо для наушников → PAM8403 → динамик -->
+        <g>
+          <path class="w" d="M230 310v170h30M350 480h30M500 480h30M630 480h25"/>
+          <rect class="part" x="260" y="462" width="90" height="36" rx="4"/>
+          <rect class="part" x="380" y="462" width="120" height="36" rx="4"/>
+          <rect class="part" x="530" y="462" width="100" height="36" rx="4"/>
+          <rect class="part" x="655" y="470" width="12" height="20"/>
+          <path class="part" d="M667 470l18-12v44l-18-12z"/>
+          <text class="c" x="305" y="485">делитель</text>
+          <text class="c" x="440" y="485">гнездо 3,5 мм</text>
+          <text class="c" x="580" y="485">PAM8403</text>
+          <text class="v c" x="440" y="520">сюда наушники</text>
+          <text class="v c" x="580" y="520">питание 5 В</text>
+          <text class="v c" x="672" y="520">динамик 8 Ом</text>
+          <text class="p" x="230" y="300">D9</text>
+        </g>
+
+        <!-- Питание -->
+        <g>
+          <path class="w" d="M600 310v35M690 310v35"/>
+          <rect class="part" x="560" y="345" width="170" height="50" rx="4"/>
+          <text class="c" x="645" y="375">USB Type-C</text>
+          <text class="p" x="600" y="300">5V</text>
+          <text class="p" x="690" y="300">GND</text>
+        </g>
+      </svg>
+    </div>
+    <div class="notes">
+      <div class="note"><b>Светодиод</b><span>Белый, через 270&nbsp;Ом от +5&nbsp;В к пину A0. Горит, когда на A0 низкий уровень.</span></div>
+      <div class="note"><b>Сенсоры</b><span>Каждая медная полоска проводом идёт на свой пин, а пин через 1&nbsp;МОм на +5&nbsp;В. Палец тянет напряжение вниз.</span></div>
+      <div class="note"><b>Крутилки</b><span>Крайние выводы на +5&nbsp;В и GND, средний на пин. Сейчас стоят две по 100&nbsp;кОм и одна на 1&nbsp;МОм, лучше все три по 10&nbsp;кОм: АЦП Arduino рассчитан на источник не больше 10&nbsp;кОм, с высокоомной ручкой показания плывут.</span></div>
+    </div>
   </section>
 
   <section>
