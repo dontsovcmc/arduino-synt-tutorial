@@ -73,13 +73,12 @@ code, .mono { font-family: var(--font-mono); font-size: .92em; }
 }
 
 /* Фото */
-.photo {
-  aspect-ratio: 4 / 3; max-width: 100%;
-  border: 2px dashed var(--line); border-radius: 6px;
-  display: grid; place-items: center; text-align: center;
-  color: var(--muted); background: var(--panel); padding: 16px;
+.photo { margin: 0; }
+.photo img {
+  display: block; width: 100%; height: auto; aspect-ratio: 16 / 9;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--panel);
 }
-.photo strong { display: block; font-family: var(--font-display); font-weight: 400; color: var(--fg); font-size: 1.1rem; }
+.photo figcaption { margin-top: 8px; color: var(--muted); font-size: .9rem; }
 
 /* Пины */
 .pins { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
@@ -136,9 +135,10 @@ footer { color: var(--muted); font-size: .88rem; }
     <div class="specs"><span>ATmega328P 16 МГц</span><span>FM-синтез</span><span>3 голоса</span><span>16384 отсчёта/с</span><span>ШИМ на D9</span></div>
   </header>
 
-  <div class="photo" role="img" aria-label="Место для фотографии паровоза">
-    <div><strong>Фото скоро будет</strong>Здесь появится снимок паровоза</div>
-  </div>
+  <figure class="photo">
+    <img src="img/parovoz_labels.jpg" width="1600" height="900" alt="Паровоз: три медные полоски на корпусе — ноты, три крутилки на задней стенке, внизу выход на наушники">
+    <figcaption>Полоски на корпусе — ноты, крутилки на задней стенке — ручки, внизу — выход на наушники. <a href="img/parovoz.jpg">Фото без подписей</a></figcaption>
+  </figure>
 
   <section>
     <h2>Как он звучит</h2>
