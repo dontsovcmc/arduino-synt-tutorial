@@ -198,7 +198,7 @@ footer { color: var(--muted); font-size: .88rem; }
     <h2>Электрическая схема</h2>
     <div class="scheme">
       <svg viewBox="0 0 760 650" role="img" aria-labelledby="schTitle">
-        <title id="schTitle">Схема паровоза: три сенсора через 1 МОм на +5 В к пинам A5–A7, три крутилки на A2–A4, белый светодиод через 270 Ом на A0, звук с D9 на ножку 3 гнезда для наушников, а с ножки 4 на усилитель PAM8403, питание от USB Type-C</title>
+        <title id="schTitle">Схема паровоза: три сенсора через 1 МОм на +5 В к пинам A5–A7, три крутилки на A2–A4, белый светодиод через 270 Ом на A0, звук с D9 на ножку 5 гнезда для наушников, а с ножки 4 на усилитель PAM8403, питание от USB Type-C</title>
 
         <!-- Arduino Nano -->
         <rect class="nano" x="30" y="230" width="700" height="80" rx="6"/>
@@ -273,18 +273,18 @@ footer { color: var(--muted); font-size: .88rem; }
           <text class="p" x="100" y="300">A0</text>
         </g>
 
-        <!-- Звук: D9 → ножка 3 гнезда; без штекера 3 замкнута с 4 → PAM8403 → динамик -->
+        <!-- Звук: D9 → ножка 5 гнезда; без штекера 5 замкнута с 4 → PAM8403 → динамик -->
         <g>
           <path class="w" d="M230 310V470h190"/>
           <text class="p" x="230" y="300">D9</text>
 
-          <!-- гнездо TKX3-3.5-05: 3–4 замкнуты, пока штекера нет -->
+          <!-- гнездо TKX3-3.5-05: 5–4 замкнуты, пока штекера нет -->
           <rect class="part" x="420" y="440" width="180" height="170" rx="6"/>
           <path class="w" d="M420 470h48M470 470l82 11M600 470h-50v12M420 580h50M420 580h-28v12M382 592h20M386 597h12M390 602h4"/>
           <circle class="dot" cx="470" cy="470" r="3"/>
-          <text x="428" y="462">3</text>
+          <text x="428" y="462">5</text>
           <text class="e" x="592" y="462">4</text>
-          <text class="v" x="428" y="530">2, 5 — не подключены</text>
+          <text class="v" x="428" y="530">2, 3 — не подключены</text>
           <text x="428" y="572">1 <tspan class="v">· GND</tspan></text>
           <text class="c" x="510" y="430">гнездо TKX3-3.5-05</text>
           <text class="v c" x="510" y="632">сюда наушники</text>
@@ -317,10 +317,10 @@ footer { color: var(--muted); font-size: .88rem; }
 
   <section>
     <h2>Гнездо для наушников</h2>
-    <p>Обычное гнездо mini jack 3,5 мм на плату, TKX3-3.5-05, пять ножек. Внутри пружина: пока штекера нет, ножки 3 и 4 замкнуты, и звук с D9 проходит на усилитель. Штекер отжимает пружину, усилитель отключается, звук идёт в наушники.</p>
+    <p>Обычное гнездо mini jack 3,5 мм на плату, TKX3-3.5-05, пять ножек. Внутри пружина: пока штекера нет, ножки 5 и 4 замкнуты, и звук с D9 проходит на усилитель. Штекер отжимает пружину, усилитель отключается, звук идёт в наушники.</p>
     <div class="jack">
       <figure>
-        <svg viewBox="0 0 700 370" role="img" aria-label="Гнездо TKX3-3.5-05 сверху: ножка 1 у входа — GND, ножка 3 посередине — D9, ножка 4 на углу — к усилителю, ножки 2 и 5 не подключены">
+        <svg viewBox="0 0 700 370" role="img" aria-label="Гнездо TKX3-3.5-05 сверху: ножка 1 у входа — GND, ножка 5 сбоку — D9, ножка 4 на углу — к усилителю, ножки 2 и 3 не подключены">
           <polygon class="jk-side" points="320,265 494,175 494,255 320,345"/>
           <polygon class="jk-front" points="200,190 320,265 320,345 200,270"/>
           <polygon class="jk-top" points="200,190 374,100 494,175 320,265"/>
@@ -332,11 +332,11 @@ footer { color: var(--muted); font-size: .88rem; }
           <path class="jk-lead jk-on" d="M372 73L434 31"/>
           <text class="jk-lab jk-on" x="440" y="36">4 · к усилителю PAM8403</text>
           <path class="jk-pin" d="M285 163V127L290 121L295 127V163Z"/>
-          <path class="jk-lead jk-off" d="M290 121L165 65"/>
-          <text class="jk-lab jk-off" x="20" y="70">5 · не подключена</text>
+          <path class="jk-lead jk-on" d="M290 121L75 65"/>
+          <text class="jk-lab jk-on" x="20" y="70">5 · D9</text>
           <path class="jk-pin" d="M389 190V154L394 148L399 154V190Z"/>
-          <path class="jk-lead jk-on" d="M394 148L534 135"/>
-          <text class="jk-lab jk-on" x="540" y="140">3 · D9</text>
+          <path class="jk-lead jk-off" d="M394 148L534 135"/>
+          <text class="jk-lab jk-off" x="540" y="140">3 · не подключена</text>
           <path class="jk-pin" d="M427 200V164L432 158L437 164V200Z"/>
           <path class="jk-lead jk-off" d="M432 158L524 245"/>
           <text class="jk-lab jk-off" x="530" y="250">2 · не подключена</text>
@@ -352,8 +352,8 @@ footer { color: var(--muted); font-size: .88rem; }
       </figure>
     </div>
     <div class="notes">
-      <div class="note"><b>Как подключено</b><span>Ножка 3 — D9, ножка 4 — вход PAM8403, ножка 1 — GND. Ножки 2 и 5 не подключены.</span></div>
-      <div class="note"><b>Если втыкать наушники</b><span>D9 идёт на гнездо напрямую. Наушники 32&nbsp;Ом потянут из пина больше 40&nbsp;мА, а это его предел. Безопаснее поставить между D9 и ножкой 3 резистор 470&nbsp;Ом – 1&nbsp;кОм и конденсатор 10&nbsp;мкФ плюсом к Arduino.</span></div>
+      <div class="note"><b>Как подключено</b><span>Ножка 5 — D9, ножка 4 — вход PAM8403, ножка 1 — GND. Ножки 2 и 3 не подключены.</span></div>
+      <div class="note"><b>Если втыкать наушники</b><span>D9 идёт на гнездо напрямую. Наушники 32&nbsp;Ом потянут из пина больше 40&nbsp;мА, а это его предел. Безопаснее поставить между D9 и ножкой 5 резистор 470&nbsp;Ом – 1&nbsp;кОм и конденсатор 10&nbsp;мкФ плюсом к Arduino.</span></div>
     </div>
   </section>
 
